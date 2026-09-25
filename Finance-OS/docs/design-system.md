@@ -1,9 +1,78 @@
-# Design-System – wiederverwendbare UI-Muster (Stand Phase 16 / M13, 2026-07-20)
+# Design-System – wiederverwendbare UI-Muster (Stand Redesign 2026-09)
 
 Normative Quelle für Stil und Bedienbarkeit ist der Skill `frontend-design`
 (`.claude/skills/frontend-design`). Dieses Dokument listet die in Finance OS
 bereits umgesetzten, wiederverwendbaren Muster mit ihren CSS-Klassen
 (`src/index.css`) als Referenz für kommende Module.
+
+## Farbwelt und Typografie (Redesign 2026-09, „Tinte & Papier“)
+
+Alle Farben sind CSS-Variablen in `:root` (`src/index.css`); Komponenten
+verwenden nie feste Farbwerte. Alle Text-/Flächenpaare erfüllen WCAG AA
+(Text ≥ 4,5:1, Rahmen von Bedienelementen ≥ 3:1 – nachgerechnet).
+
+| Token | Wert | Verwendung |
+|---|---|---|
+| `--tinte` | #1B2B34 | Text, Primärbuttons, aktive Navigation, Fokusrahmen |
+| `--tinte-weich` | #4A5D67 | Sekundärtext, Beschriftungen (6,0:1 auf Papier) |
+| `--papier` / `--papier-hell` | #EFF1EC / #F9FAF7 | Seitenfläche / Karten, Tabellen, Formulare |
+| `--linie` / `--linie-fein` | #CBD2C8 / #DFE3DA | Rahmen / Trennlinien |
+| `--eingabe-fill` / `--eingabe-rand` | #E4EDF4 / #5E7F96 | **Eingaben sind blau hinterlegt** |
+| `--rechen-fill` | #E5EEE7 | **berechnete Werte grünlich hinterlegt** (`.computed-value`, `.sum-line`) |
+| `--fix` / `--sparen` | #24404C / #3E7C76 | Allokationsband (Depot / Tagesgeld), Fortschrittsbalken |
+| `--gruen*` / `--gelb*` / `--rot*` | Punkt-, Text- und Flächenton je Status | Plaketten, Hinweise, Fehler |
+
+- Das Vorlagen-Gelb #BD9424 (2,5:1) dient nur für Punkte/Rahmen; Warntext
+  nutzt `--gelb-text` #7D5F0C. Der Eingaberahmen wurde von #7EA3BC (2,4:1) auf
+  #5E7F96 abgedunkelt.
+- Serifen (`--serif`: Iowan Old Style/Palatino/Georgia) nur für Seiten- und
+  Abschnittstitel sowie große Kennzahlen; Fließtext und Bedienelemente in der
+  Systemschrift (`--sans`). Keine Webfonts (keine Netzwerkzugriffe).
+- Zahlen in Tabellen und Kennzahlen mit `font-variant-numeric: tabular-nums`;
+  Zahlenspalten tragen `class="num"` (rechtsbündig) auf `th` UND `td`.
+- Nur helles Farbschema (`color-scheme: light`).
+
+## App-Rahmen (Redesign 2026-09)
+
+- Kopfbereich (`header.app-header`, klebt oben): Marke, Dateiname und
+  Speicherstand, Status-Pille (`.dirty-indicator` / `.saved-indicator` /
+  `.nodata-indicator`, Text + Symbol) und – sobald Daten geladen sind – die
+  Speicheraktion „In Datei speichern“ (ohne Save-Picker ehrlich „Als Download
+  speichern“; gemeinsame Beschriftung in `src/layout/saveLabel.ts`). Bei
+  ungespeicherten Änderungen ist sie als Primärbutton hervorgehoben.
+- Seitenleiste: die 9 Seiten in unveränderter Reihenfolge, gegliedert in die
+  benannten Gruppen Start · Vermögen · Planung · Verwaltung (je Gruppe eine
+  über `aria-labelledby` benannte Liste); dekorative Inline-SVG-Icons
+  (`src/components/Icon.tsx`, immer `aria-hidden`).
+- „Zum Inhalt springen“-Link; nach jedem Seitenwechsel Scroll an den Anfang und
+  Fokus auf `main` (Screenreader starten beim neuen Seitentitel).
+- Fehler eines Datei-Vorgangs (z. B. Speichern aus dem Kopfbereich) erscheinen
+  auf jeder Seite als `role="alert"` mit Weg zu „Daten & Backups“.
+- Mobil (< 52rem): Kopfbereich nicht klebend, Menü-Button klebt oben.
+
+## Knöpfe und Beschriftungen (Redesign 2026-09)
+
+- Hierarchie: Standard-`button` = sekundär (Rahmen); `.btn-primary` = die eine
+  Hauptaktion je Bereich (Formular-Submits in `.form-actions` automatisch);
+  `.btn-danger` = destruktive/Summen-verändernde Aktionen (Deaktivieren,
+  Beenden, Archivieren, Verwerfen, Bestand ersetzen); `.btn-quiet` = rein
+  navigierende Nebenaktion; `.btn-sm` bzw. `.row-actions button` = kompakt.
+- Beschriftungen nennen das Ergebnis der Aktion. „Speichern“ ist der DATEI
+  vorbehalten; Formulare übernehmen nur in den Arbeitsspeicher und heißen
+  deshalb „<Objekt> anlegen“ (Anlegen), „Änderungen übernehmen“ (Bearbeiten),
+  „Wert übernehmen“ (Werterfassung), „Snapshot übernehmen“ (Snapshot).
+- Aktionen, die einen Dialog öffnen, enden auf „…“ („Datei öffnen …“,
+  „Speichern unter …“).
+- Status in Tabellen/Karten als Plakette `.badge` (+ `--ok`/`--warn`/
+  `--danger`/`--info`) – Text und Symbol bleiben das Signal, Farbe ergänzt nur.
+
+## Startzustand ohne Datei (Redesign 2026-09)
+
+- Gemeinsame Komponente `src/components/StartHint.tsx` auf allen Fachseiten:
+  bietet „Datei öffnen …“ und „Neue leere Datei anlegen“ DIREKT an (dieselben
+  Provider-Aktionen wie auf „Daten & Backups“) plus „Import und weitere
+  Optionen“ als Weg zur Datenseite; ein fehlgeschlagenes Öffnen wird dort als
+  `role="alert"` gemeldet.
 
 ## Kennzahlen (KPI-Kacheln)
 
@@ -15,8 +84,8 @@ bereits umgesetzten, wiederverwendbaren Muster mit ihren CSS-Klassen
 
 ## Leerzustände und Starthinweis
 
-- `div.start-hint`: verständlicher Leerzustand ohne geladene Datei mit direktem
-  Button zu „Daten & Backups“ (Muster in jeder Seite identisch).
+- `div.start-hint`: verständlicher Leerzustand ohne geladene Datei (gemeinsame
+  Komponente `StartHint`, siehe oben) mit direkten Aktionen.
 - Fachliche Leerzustände als `p.app-hint` mit konkretem nächsten Schritt.
 
 ## Erklärblöcke (Details-Muster)

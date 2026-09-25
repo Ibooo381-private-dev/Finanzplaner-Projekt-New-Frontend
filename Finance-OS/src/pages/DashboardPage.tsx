@@ -12,6 +12,12 @@
  * alle Hinweise sind rein informativ (G1/G2). Fehlende Werte sind „unbekannt“,
  * nie 0 (G11); geglättete Werte tragen immer das Label
  * „geglättet (Analysewert)“ (G9).
+ *
+ * Redesign 2026-09: Das Gesamtvermögen steht als Blickfang oben (große Zahl
+ * plus Aufteilungsband Depot/Tagesgeld). Das Band ist rein dekorativ
+ * (aria-hidden) – die Anteile stehen als Text-Legende direkt darunter und
+ * stammen unverändert aus depotShareOfTotal/cashShareOfTotal. Der Dateistatus
+ * steht weiter unten (Datei und Speicherstatus zeigt ohnehin der Kopfbereich).
  */
 
 import type {
@@ -43,6 +49,8 @@ import { hasEntriesAfter, latestCompleteSnapshotDate, latestValuationDate } from
 import { formatEuro } from '../format/money'
 import { formatIsoDateGerman, formatIsoTimestampGerman } from '../format/date'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
+import { Icon } from '../components/Icon'
 import type { PageId } from '../layout/pages'
 
 /** Kontotypen des „sonstigen aktiven Kontovermögens“ – pension NIE (Merkposten ohne Wert). */
@@ -72,6 +80,14 @@ const GOAL_STATUS_SYMBOLS: Record<GoalStatus, string> = {
   deferred: '⏸',
   reached: '✔',
   archived: '■',
+}
+
+/** Plaketten-Ton je Status (Farbe ergänzt nur – Symbol + Text bleiben das Signal). */
+const GOAL_STATUS_BADGES: Record<GoalStatus, string> = {
+  active: 'badge badge--ok',
+  deferred: 'badge badge--warn',
+  reached: 'badge badge--ok',
+  archived: 'badge',
 }
 
 function isAccountActive(account: Account): boolean {
@@ -118,19 +134,6 @@ function replaceIdsWithNames(message: string, data: FinanceData): string {
   return result
 }
 
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
-  )
-}
 
 /** Kennzahlen-Kachel (kpi-grid-Muster); Zusatzhinweise als sichtbarer Text, nie nur Farbe. */
 function KpiTile({
@@ -138,6 +141,7 @@ function KpiTile({
   value,
   note,
   containsUnknown,
+  hero = false,
 }: {
   label: string
   value: string
@@ -145,9 +149,11 @@ function KpiTile({
   note?: string
   /** G11: true, wenn die Summe Einträge ohne erfassten Wert enthält. */
   containsUnknown: boolean
+  /** Große Darstellung als Blickfang (nur Gesamtvermögen). */
+  hero?: boolean
 }) {
   return (
-    <div className="kpi-tile">
+    <div className={hero ? 'kpi-tile kpi-tile--hero' : 'kpi-tile'}>
       <dt>{label}</dt>
       <dd>
         <span>{value}</span>
@@ -155,6 +161,64 @@ function KpiTile({
         {containsUnknown ? <span className="kpi-note">⚠ enthält unbekannte Werte</span> : null}
       </dd>
     </div>
+  )
+}
+
+/**
+ * Aufteilung des Gesamtvermögens (F3/F4): dekoratives Band + Text-Legende.
+ * Die Anteile kommen fertig aus der reinen Schicht; hier wird nur angezeigt.
+ * Ohne berechenbare Anteile (z. B. Gesamtvermögen 0) bleibt das Band leer
+ * und die Legende zeigt „nicht berechenbar“ – nie NaN.
+ */
+function AllocationBand({
+  depotShare,
+  cashShare,
+  percentDecimals,
+}: {
+  depotShare: number | null
+  cashShare: number | null
+  percentDecimals: number
+}) {
+  const parts = [
+    { key: 'depot', name: 'Depot', share: depotShare },
+    { key: 'cash', name: 'Tagesgeld', share: cashShare },
+  ]
+  return (
+    <>
+      <div className="band" aria-hidden="true">
+        {parts.map((part) =>
+          part.share !== null && part.share > 0 ? (
+            <div
+              key={part.key}
+              className={`band-part band-part--${part.key}`}
+              style={{ flex: `0 0 ${Math.min(part.share, 1) * 100}%` }}
+            >
+              {part.name}
+            </div>
+          ) : null,
+        )}
+      </div>
+      <dl className="band-legend">
+        <div>
+          <dt>
+            <span className="band-swatch band-swatch--depot" aria-hidden="true" />
+            Anteil Depot am Gesamtvermögen
+          </dt>
+          <dd>
+            {depotShare === null ? 'nicht berechenbar' : formatShare(depotShare, percentDecimals)}
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <span className="band-swatch band-swatch--cash" aria-hidden="true" />
+            Anteil Tagesgeld am Gesamtvermögen
+          </dt>
+          <dd>
+            {cashShare === null ? 'nicht berechenbar' : formatShare(cashShare, percentDecimals)}
+          </dd>
+        </div>
+      </dl>
+    </>
   )
 }
 
@@ -217,8 +281,10 @@ function GoalEntry({
   const heading = (
     <p className="goal-heading">
       {/* Status als Text MIT Symbol – konsistent zu den M12-Zielkarten (B4). */}
-      <strong>{goal.name}</strong> – Status: {GOAL_STATUS_SYMBOLS[goal.status]}{' '}
-      {GOAL_STATUS_LABELS[goal.status]}
+      <strong>{goal.name}</strong> <span className="visually-hidden">Status:</span>{' '}
+      <span className={GOAL_STATUS_BADGES[goal.status]}>
+        {`${GOAL_STATUS_SYMBOLS[goal.status]} ${GOAL_STATUS_LABELS[goal.status]}`}
+      </span>
     </p>
   )
   if (goal.status === 'deferred') {
@@ -434,45 +500,40 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: PageId) => vo
   return (
     <section className="page" aria-labelledby="page-title">
       <h2 id="page-title">Übersicht</h2>
-
-      <section aria-labelledby="dashboard-file-title">
-        <h3 id="dashboard-file-title">Dateistatus</h3>
-        <dl className="facts-list">
-          <div>
-            <dt>Datei</dt>
-            <dd>{state.fileName ?? 'Keine Datei geöffnet'}</dd>
-          </div>
-          <div>
-            <dt>Zuletzt gespeichert</dt>
-            <dd>{savedText}</dd>
-          </div>
-          <div>
-            <dt>Änderungsstatus</dt>
-            <dd>
-              {state.isDirty
-                ? '● Ungespeicherte Änderungen vorhanden'
-                : '✓ Keine ungespeicherten Änderungen vorhanden'}
-            </dd>
-          </div>
-          <div>
-            <dt>Aktuelles Bewertungsdatum</dt>
-            <dd>
-              {valuationDate === null
-                ? 'unbekannt – noch kein Bewertungsdatum erfasst'
-                : formatIsoDateGerman(valuationDate)}
-            </dd>
-          </div>
-        </dl>
-      </section>
+      <p className="app-hint">
+        Dein Finanzstand auf einen Blick – rein lesend. Werte änderst du auf den Seiten Konten,
+        Depot, Sparpläne und Ziele.
+      </p>
 
       <section aria-labelledby="dashboard-wealth-title">
         <h3 id="dashboard-wealth-title">Vermögen</h3>
-        <dl className="kpi-grid">
-          <KpiTile
-            label="Gesamtvermögen (Tagesgeld + Depot)"
-            value={aggregatedDisplay(totalAsAggregated, cashRelevantCount + activePositions.length)}
-            containsUnknown={cash.missingIds.length > 0 || depot.missingIds.length > 0}
+        <div className="hero">
+          <div className="hero-head">
+            <dl className="hero-kpi">
+              <KpiTile
+                hero
+                label="Gesamtvermögen (Tagesgeld + Depot)"
+                value={aggregatedDisplay(
+                  totalAsAggregated,
+                  cashRelevantCount + activePositions.length,
+                )}
+                containsUnknown={cash.missingIds.length > 0 || depot.missingIds.length > 0}
+              />
+            </dl>
+            <p className="hero-note">
+              {valuationDate === null
+                ? 'Noch kein Bewertungsdatum erfasst.'
+                : `Bewertungsstand ${formatIsoDateGerman(valuationDate)}.`}{' '}
+              Sonstiges Kontovermögen (Girokonto, Rücklagen …) zählt nicht zum Gesamtvermögen.
+            </p>
+          </div>
+          <AllocationBand
+            depotShare={depotShare}
+            cashShare={cashShare}
+            percentDecimals={percentDecimals}
           />
+        </div>
+        <dl className="kpi-grid">
           <KpiTile
             label="Depotwert (aktive Positionen)"
             value={aggregatedDisplay(depot, activePositions.length)}
@@ -498,14 +559,6 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: PageId) => vo
               {aggregatedDisplay(world, worldRelevantCount)}
               {world.missingIds.length > 0 ? ' (⚠ enthält unbekannte Werte)' : null}
             </dd>
-          </div>
-          <div>
-            <dt>Anteil Depot am Gesamtvermögen</dt>
-            <dd>{depotShare === null ? 'nicht berechenbar' : formatShare(depotShare, percentDecimals)}</dd>
-          </div>
-          <div>
-            <dt>Anteil Tagesgeld am Gesamtvermögen</dt>
-            <dd>{cashShare === null ? 'nicht berechenbar' : formatShare(cashShare, percentDecimals)}</dd>
           </div>
           <div>
             <dt>Aktive Konten</dt>
@@ -610,8 +663,8 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: PageId) => vo
               <li>
                 ⚠ Seit dem letzten vollständigen Snapshot wurden Werte verändert – ein neuer
                 Snapshot friert den aktuellen Stand ein.{' '}
-                <button type="button" onClick={() => onNavigate('depot')}>
-                  Zur Snapshot-Erfassung (Depot)
+                <button type="button" className="btn-sm" onClick={() => onNavigate('depot')}>
+                  Neuen Snapshot im Depot erfassen
                 </button>
               </li>
             ) : null}
@@ -619,17 +672,50 @@ export function DashboardPage({ onNavigate }: { onNavigate: (page: PageId) => vo
         </div>
       </section>
 
+      <section aria-labelledby="dashboard-file-title">
+        <h3 id="dashboard-file-title">Dateistatus</h3>
+        <dl className="facts-list">
+          <div>
+            <dt>Datei</dt>
+            <dd>{state.fileName ?? 'Keine Datei geöffnet'}</dd>
+          </div>
+          <div>
+            <dt>Zuletzt gespeichert</dt>
+            <dd>{savedText}</dd>
+          </div>
+          <div>
+            <dt>Änderungsstatus</dt>
+            <dd>
+              {state.isDirty
+                ? '● Ungespeicherte Änderungen vorhanden'
+                : '✓ Keine ungespeicherten Änderungen vorhanden'}
+            </dd>
+          </div>
+          <div>
+            <dt>Aktuelles Bewertungsdatum</dt>
+            <dd>
+              {valuationDate === null
+                ? 'unbekannt – noch kein Bewertungsdatum erfasst'
+                : formatIsoDateGerman(valuationDate)}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
       <section aria-labelledby="dashboard-nav-title">
-        <h3 id="dashboard-nav-title">Navigation</h3>
-        <div className="toolbar">
+        <h3 id="dashboard-nav-title">Schnellzugriff</h3>
+        <div className="quick-links">
           <button type="button" onClick={() => onNavigate('konten')}>
-            Zu Konten
+            <Icon name="accounts" />
+            Kontostände erfassen
           </button>
           <button type="button" onClick={() => onNavigate('depot')}>
-            Zum Depot
+            <Icon name="depot" />
+            Depotwerte erfassen
           </button>
           <button type="button" onClick={() => onNavigate('daten-backups')}>
-            Zu Daten &amp; Backups
+            <Icon name="data" />
+            Datei speichern &amp; sichern
           </button>
         </div>
       </section>

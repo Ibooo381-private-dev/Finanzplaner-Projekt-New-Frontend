@@ -254,7 +254,7 @@ export function FinanceDataProvider({ children, now }: { children: ReactNode; no
         } catch (err) {
           dispatch({
             type: 'SAVE_FAILED',
-            message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg "Exportieren (Download)".`,
+            message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg „Kopie exportieren (Download)“ auf der Seite „Daten & Backups“.`,
           })
           return
         }
@@ -271,7 +271,7 @@ export function FinanceDataProvider({ children, now }: { children: ReactNode; no
         } catch (err) {
           dispatch({
             type: 'SAVE_FAILED',
-            message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg "Exportieren (Download)".`,
+            message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg „Kopie exportieren (Download)“ auf der Seite „Daten & Backups“.`,
           })
           return
         }
@@ -329,7 +329,7 @@ export function FinanceDataProvider({ children, now }: { children: ReactNode; no
       } catch (err) {
         dispatch({
           type: 'SAVE_FAILED',
-          message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg "Exportieren (Download)".`,
+          message: `Die Datei konnte nicht geschrieben werden (${toErrorMessage(err)}). Der Bestand im Arbeitsspeicher bleibt vollständig erhalten. Nutze als Ausweg „Kopie exportieren (Download)“ auf der Seite „Daten & Backups“.`,
         })
         return
       }

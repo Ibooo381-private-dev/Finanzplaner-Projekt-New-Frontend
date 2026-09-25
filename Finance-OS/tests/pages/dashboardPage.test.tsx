@@ -140,7 +140,7 @@ describe('DashboardPage – Leerzustand', () => {
     renderDashboard()
     expect(screen.getByRole('heading', { level: 2, name: 'Übersicht' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
     // Keine weiteren Sektionen: die h3-Überschriften der Fachblöcke fehlen.
     // („Ziele“ existiert als Navigationspunkt – deshalb Überschriften-Queries.)
     expect(screen.queryByRole('heading', { level: 3, name: 'Dateistatus' })).toBeNull()
@@ -149,7 +149,7 @@ describe('DashboardPage – Leerzustand', () => {
     expect(
       screen.queryByRole('heading', { level: 3, name: 'Datenqualität und Warnungen' }),
     ).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Zum Depot' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Depotwerte erfassen' })).toBeNull()
   })
 })
 
@@ -348,6 +348,41 @@ describe('DashboardPage – Vermögen (Seed)', () => {
   })
 })
 
+describe('DashboardPage – Vermögensband (Redesign)', () => {
+  it('Band ist rein dekorativ (aria-hidden); die Anteile stehen als Text-Legende', () => {
+    const captured = renderDashboard()
+    loadData(captured, loadExample())
+    const region = wealthRegion()
+    const band = region.querySelector('.band')
+    expect(band).not.toBeNull()
+    expect(band).toHaveAttribute('aria-hidden', 'true')
+    // Breiten folgen den Anteilen aus der reinen Schicht (80,08 % / 19,92 %).
+    const parts = Array.from(band!.querySelectorAll<HTMLElement>('.band-part'))
+    expect(parts.map((part) => part.textContent)).toEqual(['Depot', 'Tagesgeld'])
+    expect(parseFloat(parts[0].style.flexBasis)).toBeCloseTo(80.08, 1)
+    expect(parseFloat(parts[1].style.flexBasis)).toBeCloseTo(19.92, 1)
+    expect(factValue(region, 'Anteil Depot am Gesamtvermögen')).toBe('80,08 %')
+    expect(within(region).getByText('Bewertungsstand 17.07.2026.', { exact: false })).toBeInTheDocument()
+  })
+
+  it('ohne bewertete Werte: leeres Band, Legende „nicht berechenbar“, nie NaN', () => {
+    const captured = renderDashboard()
+    const data = loadExample()
+    loadData(captured, {
+      ...data,
+      accounts: data.accounts.map((account) => ({ ...account, balanceHistory: [] })),
+      portfolioPositions: data.portfolioPositions.map((position) => ({
+        ...position,
+        valueHistory: [],
+      })),
+    })
+    const region = wealthRegion()
+    expect(region.querySelectorAll('.band-part')).toHaveLength(0)
+    expect(factValue(region, 'Anteil Tagesgeld am Gesamtvermögen')).toBe('nicht berechenbar')
+    expect(region.textContent).not.toContain('NaN')
+  })
+})
+
 describe('DashboardPage – Sparen und Zuflüsse (Seed)', () => {
   it('real 118,50/125,00 und geglättet 201,83/250,00 – geglättete Werte sind gekennzeichnet', () => {
     const captured = renderDashboard()
@@ -472,7 +507,7 @@ describe('DashboardPage – Ziele', () => {
     for (const name of ['Auto-Ruecklage', 'Urlaub']) {
       const item = goalItem(name)
       // Status als Text MIT Symbol (B4, konsistent zu den M12-Zielkarten).
-      expect(within(item).getByText('– Status: ⏸ zurückgestellt')).toBeInTheDocument()
+      expect(within(item).getByText('⏸ zurückgestellt')).toBeInTheDocument()
       expect(
         within(item).getByText('Zurückgestellt – es wird kein Fortschritt berechnet.'),
       ).toBeInTheDocument()
@@ -641,7 +676,7 @@ describe('DashboardPage – Datenqualität und Warnungen', () => {
       ),
     ).toBeInTheDocument()
     fireEvent.click(
-      within(quality).getByRole('button', { name: 'Zur Snapshot-Erfassung (Depot)' }),
+      within(quality).getByRole('button', { name: 'Neuen Snapshot im Depot erfassen' }),
     )
     expect(screen.getByRole('heading', { level: 2, name: 'Depot' })).toBeInTheDocument()
   })
@@ -679,7 +714,7 @@ describe('DashboardPage – Navigation', () => {
   it('„Zum Depot“ wechselt die Seite und aria-current in der Hauptnavigation', () => {
     const captured = renderDashboard()
     loadData(captured, loadExample())
-    fireEvent.click(screen.getByRole('button', { name: 'Zum Depot' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Depotwerte erfassen' }))
     expect(screen.getByRole('heading', { level: 2, name: 'Depot' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' })
     expect(within(nav).getByRole('button', { name: 'Depot' })).toHaveAttribute(
@@ -694,13 +729,13 @@ describe('DashboardPage – Navigation', () => {
   it('„Zu Konten“ und „Zu Daten & Backups“ führen zu den jeweiligen Seiten', () => {
     const captured = renderDashboard()
     loadData(captured, loadExample())
-    fireEvent.click(screen.getByRole('button', { name: 'Zu Konten' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Kontostände erfassen' }))
     expect(screen.getByRole('heading', { level: 2, name: 'Konten' })).toBeInTheDocument()
 
     // Zurück zur Übersicht über die Hauptnavigation, dann weiter zu Daten & Backups.
     const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' })
     fireEvent.click(within(nav).getByRole('button', { name: 'Übersicht' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Zu Daten & Backups' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Datei speichern & sichern' }))
     expect(
       screen.getByRole('heading', { level: 2, name: 'Daten & Backups' }),
     ).toBeInTheDocument()
@@ -713,7 +748,7 @@ describe('DashboardPage – Navigation', () => {
     const captured = renderDashboard()
     loadData(captured, loadExample())
     expect(screen.queryByRole('button', { name: 'Snapshot erfassen (Depot)' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Zum Depot' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Depotwerte erfassen' }))
     expect(screen.getByRole('heading', { level: 2, name: 'Depot' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Snapshot erfassen' })).toBeInTheDocument()
     // Rein lesend: die Navigation hat keine Daten verändert.

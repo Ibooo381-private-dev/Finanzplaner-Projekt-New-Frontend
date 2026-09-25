@@ -129,7 +129,7 @@ describe('DepotPage – Leerzustände', () => {
     renderDepotPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Depot' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
@@ -163,9 +163,9 @@ describe('DepotPage – Leerzustände', () => {
     const form = screen.getByRole('form', { name: 'Position hinzufügen' })
     expect(within(form).getByLabelText('Depotkonto *').querySelectorAll('option')).toHaveLength(0)
 
-    // Speichern ohne Depotkonto: feldbezogene Ablehnung der Datenfunktion (B1), keine Änderung.
+    // Anlegen ohne Depotkonto: feldbezogene Ablehnung der Datenfunktion (B1), keine Änderung.
     fireEvent.change(within(form).getByLabelText('Name *'), { target: { value: 'Testposition' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Position anlegen' }))
     expect(within(form).getByText(/existiert nicht/)).toBeInTheDocument()
     expect(captured.current!.state.data!.portfolioPositions).toHaveLength(0)
     expect(screen.queryByText('● Ungespeicherte Änderungen')).toBeNull()
@@ -335,7 +335,7 @@ describe('DepotPage – Hinzufügen', () => {
     })
     fireEvent.change(within(form).getByLabelText('Gruppe *'), { target: { value: 'em' } })
     fireEvent.change(within(form).getByLabelText('Asset-Typ'), { target: { value: 'etf' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Position anlegen' }))
 
     const row = rowOf(getPositionsTable(), 'Neuer EM ETF')
     expect(within(row).getByText('Emerging Markets')).toBeInTheDocument()
@@ -349,7 +349,7 @@ describe('DepotPage – Hinzufügen', () => {
     loadData(captured, loadExample())
     fireEvent.click(screen.getByRole('button', { name: 'Position hinzufügen' }))
     const form = screen.getByRole('form', { name: 'Position hinzufügen' })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Position anlegen' }))
     const error = within(form).getByText('Der Name darf nicht leer sein.')
     expect(error).toHaveAttribute('id', 'position-name-error')
     const input = within(form).getByLabelText('Name *')
@@ -415,7 +415,7 @@ describe('DepotPage – Bearbeiten', () => {
     fireEvent.change(within(form).getByLabelText('Name *'), {
       target: { value: 'iShares Gold ETC (neu)' },
     })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Änderungen übernehmen' }))
     expect(within(getPositionsTable()).getByText('iShares Gold ETC (neu)')).toBeInTheDocument()
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
   })
@@ -529,7 +529,7 @@ describe('DepotPage – Wert aktualisieren (strenges de-DE-Parsing)', () => {
     const form = openValueForm()
     fireEvent.change(within(form).getByLabelText('Wert in Euro *'), { target: { value: text } })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const history = captured.current!.state.data!.portfolioPositions.find(
       (position) => position.id === 'pos-ishares-gold-etc',
     )!.valueHistory
@@ -545,7 +545,7 @@ describe('DepotPage – Wert aktualisieren (strenges de-DE-Parsing)', () => {
       target: { value: '12.34' },
     })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     expect(within(form).getByText(/gültigen Betrag/)).toBeInTheDocument()
     expect(screen.queryByText('● Ungespeicherte Änderungen')).toBeNull()
   })
@@ -558,7 +558,7 @@ describe('DepotPage – Wert aktualisieren (strenges de-DE-Parsing)', () => {
     // Negativer Wert (DM20) → Fehler neben dem Betragsfeld.
     fireEvent.change(within(form).getByLabelText('Wert in Euro *'), { target: { value: '-5' } })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const amountError = within(form).getByText(/nicht negativ/)
     expect(amountError).toHaveAttribute('id', 'position-value-amount-error')
     expect(within(form).getByLabelText('Wert in Euro *')).toHaveAttribute(
@@ -569,13 +569,13 @@ describe('DepotPage – Wert aktualisieren (strenges de-DE-Parsing)', () => {
     // Gesperrtes Snapshot-Datum (DM21) → Fehler neben dem Datumsfeld.
     fireEvent.change(within(form).getByLabelText('Wert in Euro *'), { target: { value: '40' } })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-07-17' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const dateError = within(form).getByText(/gesperrten Snapshot/)
     expect(dateError).toHaveAttribute('id', 'position-value-date-error')
 
     // Fehlendes Datum → verständlicher Feldfehler.
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     expect(within(form).getByText('Bitte ein Datum wählen.')).toBeInTheDocument()
 
     expect(screen.queryByText('● Ungespeicherte Änderungen')).toBeNull()
@@ -631,10 +631,14 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     fireEvent.change(within(form).getByLabelText('Volkswagen Bank Tagesgeld (Euro) *'), {
       target: { value: '650,75' },
     })
-    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot übernehmen' }))
 
     expect(
-      screen.getByText(/Snapshot vom 18\.07\.2026 gespeichert und gesperrt/),
+      screen.getByText(/Snapshot vom 18\.07\.2026 übernommen und gesperrt/),
+    ).toBeInTheDocument()
+    // Klarstellung: „übernommen“ heißt Arbeitsstand – in die Datei erst über den Kopfbereich.
+    expect(
+      screen.getByText(/In deine Datei gelangt er erst über die Speichern-Schaltfläche oben/),
     ).toBeInTheDocument()
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
     const data = captured.current!.state.data!
@@ -659,7 +663,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     fireEvent.change(within(form).getByLabelText('Volkswagen Bank Tagesgeld (Euro) *'), {
       target: { value: '650' },
     })
-    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot übernehmen' }))
 
     // Seit dem A11y-Fix B3 gibt es MEHRERE Alerts: die Sammel-Fehlermeldung plus
     // feldnahe Fehler je unausgefülltem Feld (aria-invalid + role="alert").
@@ -686,7 +690,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     expect(screen.queryByText('● Ungespeicherte Änderungen')).toBeNull()
   })
 
-  it('Seed-Datum: Vorbelegung „bereits erfasst – wird ersetzt“, Speichern verständlich abgelehnt', () => {
+  it('Seed-Datum: Vorbelegung „bereits erfasst – wird ersetzt“, Übernehmen verständlich abgelehnt', () => {
     const captured = renderDepotPage()
     loadData(captured, loadExample())
     const form = openSnapshotForm()
@@ -696,7 +700,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     expect(within(form).getByLabelText('Volkswagen Bank Tagesgeld (Euro) *')).toHaveValue('627,59')
     expect(within(form).getByLabelText('Deutsche Telekom Aktien (Euro) *')).toHaveValue('1.369,14')
 
-    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot übernehmen' }))
     const error = within(form).getByRole('alert')
     expect(error.textContent).toContain('gesperrten Snapshot')
     expect(captured.current!.state.data!.snapshots).toHaveLength(1)
@@ -709,7 +713,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     const form = openSnapshotForm()
     expect(
       within(form).getByText(
-        /Nach dem Speichern ist das Datum dauerhaft gesperrt; Korrekturen nur als neuer Snapshot mit neuem Datum/,
+        /Nach „Snapshot übernehmen“ ist das Datum dauerhaft gesperrt; Korrekturen nur als neuer Snapshot mit neuem Datum/,
       ),
     ).toBeInTheDocument()
   })
@@ -762,7 +766,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
     })
 
     // 1) Bestätigung abgelehnt → NICHTS wird gespeichert, das Formular bleibt offen.
-    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot übernehmen' }))
     expect(confirmSpy).toHaveBeenCalledTimes(1)
     expect(confirmSpy.mock.calls[0][0]).toContain('16.07.2026')
     expect(confirmSpy.mock.calls[0][0]).toContain('rückdatiert')
@@ -772,7 +776,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
 
     // 2) Bestätigung angenommen → Snapshot am 2026-07-16 gespeichert, locked, source "user".
     confirmSpy.mockReturnValue(true)
-    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Snapshot übernehmen' }))
     expect(confirmSpy).toHaveBeenCalledTimes(2)
     const data = captured.current!.state.data!
     expect(data.snapshots).toHaveLength(2)
@@ -783,7 +787,7 @@ describe('DepotPage – Snapshot-Vollerfassung', () => {
       source: 'user',
     })
     expect(
-      screen.getByText(/Snapshot vom 16\.07\.2026 gespeichert und gesperrt/),
+      screen.getByText(/Snapshot vom 16\.07\.2026 übernommen und gesperrt/),
     ).toBeInTheDocument()
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
   })
@@ -896,6 +900,106 @@ describe('DepotPage – Zielvergleich (nur Anzeige)', () => {
         'Empfehlungen sind rein informativ – Finance OS führt niemals automatisch Käufe, Verkäufe oder Sparplanänderungen aus.',
       ),
     ).toBeInTheDocument()
+  })
+})
+
+describe('DepotPage – Darstellung (Button-Hierarchie, Zahlenspalten, Plaketten)', () => {
+  it('Toolbar: „Position hinzufügen“ primär mit Icon, „Snapshot erfassen“ sekundär', () => {
+    const captured = renderDepotPage()
+    loadData(captured, loadExample())
+    const add = screen.getByRole('button', { name: 'Position hinzufügen' })
+    expect(add).toHaveClass('btn-primary')
+    // Das Icon ist rein dekorativ – der Accessible Name bleibt der sichtbare Text.
+    expect(add.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByRole('button', { name: 'Snapshot erfassen' })).not.toHaveClass('btn-primary')
+    // Die Toolbar steht vor den Kennzahlen (direkt unter dem Einleitungstext).
+    const kpis = kpiTile('Depotwert (aktive Positionen)')
+    expect(add.compareDocumentPosition(kpis) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('Deaktivieren ist als Gefahr-Aktion markiert, Aktivieren nicht (zustandsabhängig)', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const captured = renderDepotPage()
+    loadData(captured, loadExample())
+    const deactivate = screen.getByRole('button', {
+      name: 'Position „Deutsche Telekom Aktien“ deaktivieren',
+    })
+    expect(deactivate).toHaveClass('btn-danger')
+    expect(
+      screen.getByRole('button', { name: 'Position „Deutsche Telekom Aktien“ bearbeiten' }),
+    ).not.toHaveClass('btn-danger')
+    fireEvent.click(deactivate)
+    expect(
+      screen.getByRole('button', { name: 'Position „Deutsche Telekom Aktien“ aktivieren' }),
+    ).not.toHaveClass('btn-danger')
+  })
+
+  it('Zahlenspalten rechtsbündig (num auf th + td) in Positionsliste und Zielvergleich', () => {
+    const captured = renderDepotPage()
+    loadData(captured, loadExample())
+    const positionsTable = getPositionsTable()
+    for (const header of ['Anteil am Depot', 'Anteil am Gesamtvermögen']) {
+      expect(within(positionsTable).getByRole('columnheader', { name: header })).toHaveClass('num')
+    }
+    expect(
+      within(positionsTable).getByRole('button', { name: 'Aktueller Wert ▼' }).closest('th'),
+    ).toHaveClass('num')
+    const telekomRow = rowOf(positionsTable, 'Deutsche Telekom Aktien')
+    expect(within(telekomRow).getByText(euroText(1369.14))).toHaveClass('num')
+    expect(within(telekomRow).getByText('54,28 %')).toHaveClass('num')
+    // Datum und Text bleiben linksbündig.
+    expect(within(telekomRow).getByText('17.07.2026')).not.toHaveClass('num')
+
+    const comparison = getComparisonTable()
+    for (const header of [
+      'Ziel-%',
+      'Ist-Wert',
+      'Ist-%',
+      'Abweichung (Pp)',
+      'Kaufbedarf',
+      'Verkaufsbedarf',
+    ]) {
+      expect(within(comparison).getByRole('columnheader', { name: header })).toHaveClass('num')
+    }
+    const levelHeader = within(comparison).getByRole('columnheader', { name: 'Handlungsstufe' })
+    expect(levelHeader).not.toHaveClass('num')
+    const telekomTarget = rowOf(comparison, 'Deutsche Telekom Aktien')
+    expect(within(telekomTarget).getByText(euroText(1116.89))).toHaveClass('num')
+    expect(within(telekomTarget).getByText(/\+44,28 Pp/)).toHaveClass('num')
+  })
+
+  it('Status und Handlungsstufe als Plakette – Text unverändert, „–“ ohne Plakette', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const captured = renderDepotPage()
+    loadData(captured, loadExample())
+    const positionsTable = getPositionsTable()
+    expect(
+      within(rowOf(positionsTable, 'Deutsche Telekom Aktien')).getByText('Aktiv'),
+    ).toHaveClass('badge', 'badge--ok')
+
+    const comparison = getComparisonTable()
+    expect(
+      within(rowOf(comparison, 'Deutsche Telekom Aktien')).getByText(
+        'Empfehlung inkl. Verkaufsoption',
+      ),
+    ).toHaveClass('badge', 'badge--warn')
+    expect(within(rowOf(comparison, 'iShares MSCI EM IMI')).getByText('Empfehlung')).toHaveClass(
+      'badge',
+      'badge--info',
+    )
+    // Gold: keine Handlungsstufe → schlichter Strich, keine Plakette.
+    const goldRow = rowOf(comparison, 'iShares Physical Gold ETC')
+    expect(goldRow.querySelector('.badge')).toBeNull()
+
+    // Inaktiv: neutrale Plakette (ohne Farb-Modifier), Text exakt „Inaktiv“.
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Position „Deutsche Telekom Aktien“ deaktivieren' }),
+    )
+    const inactive = within(rowOf(getPositionsTable(), 'Deutsche Telekom Aktien')).getByText(
+      'Inaktiv',
+    )
+    expect(inactive).toHaveClass('badge')
+    expect(inactive).not.toHaveClass('badge--ok')
   })
 })
 

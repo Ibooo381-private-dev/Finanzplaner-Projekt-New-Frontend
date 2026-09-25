@@ -134,7 +134,6 @@ function replaceIdsWithNames(message: string, data: FinanceData): string {
   return result
 }
 
-
 /** Kennzahlen-Kachel (kpi-grid-Muster); Zusatzhinweise als sichtbarer Text, nie nur Farbe. */
 function KpiTile({
   label,

@@ -81,7 +81,7 @@ describe('AccountsPage – Leerzustände', () => {
     renderAccountsPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Konten' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
@@ -115,7 +115,8 @@ describe('AccountsPage – Liste', () => {
     // Tagesgeld-Konto: jüngster Saldo + Datum.
     const vwRow = rowOf('Volkswagen Bank Tagesgeld')
     expect(within(vwRow).getByText(euroText(627.59))).toBeInTheDocument()
-    expect(within(vwRow).getByText('2026-07-17')).toBeInTheDocument()
+    expect(within(vwRow).getByText('17.07.2026')).toBeInTheDocument()
+    expect(vwRow.textContent).not.toContain('2026-07-17')
     expect(within(vwRow).getByText('Aktiv')).toBeInTheDocument()
 
     // Summe unter der Tabelle über cashValue(aktive Konten).
@@ -181,13 +182,13 @@ describe('AccountsPage – Hinzufügen', () => {
       target: { value: 'Bargeld Portemonnaie' },
     })
     fireEvent.change(within(form).getByLabelText('Typ *'), { target: { value: 'bargeld' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Konto anlegen' }))
 
     const row = rowOf('Bargeld Portemonnaie')
     expect(within(row).getByText('Bargeld')).toBeInTheDocument()
     expect(within(row).getByText('unbekannt')).toBeInTheDocument()
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
-    // Formular ist nach dem Speichern geschlossen.
+    // Formular ist nach dem Anlegen geschlossen.
     expect(screen.queryByRole('form', { name: 'Konto hinzufügen' })).toBeNull()
   })
 
@@ -197,7 +198,7 @@ describe('AccountsPage – Hinzufügen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Konto hinzufügen' }))
     const form = screen.getByRole('form', { name: 'Konto hinzufügen' })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Konto anlegen' }))
 
     const error = within(form).getByText('Der Name darf nicht leer sein.')
     expect(error).toHaveAttribute('id', 'account-name-error')
@@ -227,7 +228,7 @@ describe('AccountsPage – Bearbeiten', () => {
     fireEvent.change(within(form).getByLabelText('Zweck'), {
       target: { value: 'Gehaltseingang' },
     })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Änderungen übernehmen' }))
 
     const row = rowOf('Girokonto Sparkasse')
     expect(within(row).getByText('Sparkasse Neu')).toBeInTheDocument()
@@ -291,11 +292,11 @@ describe('AccountsPage – Wert aktualisieren', () => {
       target: { value: '1234,56' },
     })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
 
     const row = rowOf('Girokonto Sparkasse')
     expect(within(row).getByText(euroText(1234.56))).toBeInTheDocument()
-    expect(within(row).getByText('2026-08-01')).toBeInTheDocument()
+    expect(within(row).getByText('01.08.2026')).toBeInTheDocument()
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
 
     // Konsistenz (F1/S1): Der Giro-Saldo fließt NICHT in „Tagesgeld gesamt“ ein –
@@ -319,7 +320,7 @@ describe('AccountsPage – Wert aktualisieren', () => {
     // Gesperrtes Snapshot-Datum (DM21) → Fehler neben dem Datumsfeld.
     fireEvent.change(within(form).getByLabelText('Betrag in Euro *'), { target: { value: '700' } })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-07-17' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const dateError = within(form).getByText(/gesperrten Snapshot/)
     expect(dateError).toHaveAttribute('id', 'balance-date-error')
     expect(within(form).getByLabelText('Datum *')).toHaveAttribute(
@@ -330,7 +331,7 @@ describe('AccountsPage – Wert aktualisieren', () => {
     // Negativer Betrag ohne allowNegativeBalance (DM20) → Fehler neben dem Betragsfeld.
     fireEvent.change(within(form).getByLabelText('Betrag in Euro *'), { target: { value: '-5' } })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const amountError = within(form).getByText(/negativer Saldo/)
     expect(amountError).toHaveAttribute('id', 'balance-amount-error')
     expect(within(form).getByLabelText('Betrag in Euro *')).toHaveAttribute(
@@ -417,7 +418,7 @@ describe('Review-Befunde 3.1/3.2 – Formular-Zielwechsel und de-DE-Betragseinga
       target: { value: '12.34' },
     })
     fireEvent.change(within(form).getByLabelText('Datum *'), { target: { value: '2026-08-01' } })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     expect(within(form).getByText(/gültigen Betrag/)).toBeInTheDocument()
     expect(screen.queryByText('● Ungespeicherte Änderungen')).toBeNull()
 
@@ -425,11 +426,119 @@ describe('Review-Befunde 3.1/3.2 – Formular-Zielwechsel und de-DE-Betragseinga
     fireEvent.change(within(form).getByLabelText('Betrag in Euro *'), {
       target: { value: '1.234' },
     })
-    fireEvent.click(within(form).getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(within(form).getByRole('button', { name: 'Wert übernehmen' }))
     const history = captured.current!.state.data!.accounts.find(
       (account) => account.id === 'acc-vw-tagesgeld',
     )!.balanceHistory
     expect(history[history.length - 1]).toMatchObject({ date: '2026-08-01', amount: 1234 })
     expect(screen.getByText('● Ungespeicherte Änderungen')).toBeInTheDocument()
+  })
+})
+
+describe('AccountsPage – Redesign: klare Beschriftungen und Darstellung', () => {
+  it('Formular-Buttons nennen das Ergebnis (anlegen/übernehmen) – nie „Speichern“', () => {
+    const captured = renderAccountsPage()
+    loadData(captured, loadExample())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Konto hinzufügen' }))
+    const addForm = screen.getByRole('form', { name: 'Konto hinzufügen' })
+    expect(within(addForm).getByRole('button', { name: 'Konto anlegen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(addForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+    fireEvent.click(within(addForm).getByRole('button', { name: 'Abbrechen' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Konto „Girokonto Sparkasse“ bearbeiten' }))
+    const editForm = screen.getByRole('form', { name: 'Konto bearbeiten: Girokonto Sparkasse' })
+    expect(within(editForm).getByRole('button', { name: 'Änderungen übernehmen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(editForm).queryByRole('button', { name: 'Konto anlegen' })).toBeNull()
+    expect(within(editForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Wert von „Girokonto Sparkasse“ aktualisieren' }),
+    )
+    const balanceForm = screen.getByRole('form', {
+      name: 'Wert aktualisieren: Girokonto Sparkasse',
+    })
+    expect(within(balanceForm).getByRole('button', { name: 'Wert übernehmen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(balanceForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+  })
+
+  it('Hauptaktion „Konto hinzufügen“ ist primär mit dekorativem Plus-Icon', () => {
+    const captured = renderAccountsPage()
+    loadData(captured, loadExample())
+    const addButton = screen.getByRole('button', { name: 'Konto hinzufügen' })
+    expect(addButton).toHaveClass('btn-primary')
+    expect(addButton.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('„Deaktivieren“ ist als Gefahr-Aktion markiert, „Aktivieren“ und „Bearbeiten“ nicht', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const captured = renderAccountsPage()
+    loadData(captured, loadExample())
+
+    const deactivate = screen.getByRole('button', {
+      name: 'Konto „Volkswagen Bank Tagesgeld“ deaktivieren',
+    })
+    expect(deactivate).toHaveClass('btn-danger')
+    expect(
+      screen.getByRole('button', { name: 'Konto „Volkswagen Bank Tagesgeld“ bearbeiten' }),
+    ).not.toHaveClass('btn-danger')
+
+    fireEvent.click(deactivate)
+    expect(
+      screen.getByRole('button', { name: 'Konto „Volkswagen Bank Tagesgeld“ aktivieren' }),
+    ).not.toHaveClass('btn-danger')
+  })
+
+  it('„Aktueller Wert“ ist Zahlenspalte; Status als Plakette mit unverändertem Text', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const captured = renderAccountsPage()
+    loadData(captured, loadExample())
+
+    expect(within(getTable()).getByRole('columnheader', { name: 'Aktueller Wert' })).toHaveClass(
+      'num',
+    )
+    const vwRow = rowOf('Volkswagen Bank Tagesgeld')
+    expect(within(vwRow).getByText(euroText(627.59)).closest('td')).toHaveClass('num')
+    const depotCell = within(rowOf('Trade Republic Depot'))
+      .getByText(`Wert ergibt sich aus den Depotpositionen: ${euroText(575.34)}`)
+      .closest('td')
+    expect(depotCell).toHaveClass('num')
+
+    const activeBadge = within(vwRow).getByText('Aktiv')
+    expect(activeBadge).toHaveClass('badge', 'badge--ok')
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Konto „Volkswagen Bank Tagesgeld“ deaktivieren' }),
+    )
+    const inactiveBadge = within(rowOf('Volkswagen Bank Tagesgeld')).getByText('Inaktiv')
+    expect(inactiveBadge).toHaveClass('badge')
+    expect(inactiveBadge).not.toHaveClass('badge--ok')
+  })
+
+  it('Depot-Wert mit Zeilenumbrüchen: Text inkl. Fehlwert-Hinweis unverändert', () => {
+    const captured = renderAccountsPage()
+    const example = loadExample()
+    loadData(captured, {
+      ...example,
+      portfolioPositions: example.portfolioPositions.map((position) =>
+        position.name === 'iShares Physical Gold ETC'
+          ? { ...position, valueHistory: [] }
+          : position,
+      ),
+    })
+    const text = within(rowOf('Trade Republic Depot')).getByText(
+      /^Wert ergibt sich aus den Depotpositionen: .+ € \(enthält Positionen ohne erfassten Wert\)$/,
+    )
+    // Umbrüche nur als <br> (kein zusätzlicher Text) – Betrag steht in eigener Zeile.
+    expect(text.querySelectorAll('br')).toHaveLength(2)
   })
 })

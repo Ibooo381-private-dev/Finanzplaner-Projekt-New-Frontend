@@ -25,6 +25,7 @@ import { updateSettings } from '../data/settings'
 import type { SettingsInput } from '../data/settings'
 import { readLastAutoBackupDay } from '../storage/autoBackup'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
 
 /** Job-Profil-Aktivierung ist laut Plan erst ab diesem Tag vorgesehen (AK 3). */
 const JOB_PROFILE_EARLIEST_ISO = '2027-10-01'
@@ -401,7 +402,7 @@ function SettingsForm({
         </div>
         <p>
           Berechnet (Vorschau mit den Eingaben oben):{' '}
-          <strong>
+          <strong className="computed-value">
             {previewComputed === null
               ? 'nicht berechenbar (ungültige Eingaben)'
               : `${values.factorText.trim()} × ${parsedNet === null ? '?' : formatEuro(parsedNet)} = ${formatEuro(previewComputed)}`}
@@ -414,7 +415,7 @@ function SettingsForm({
         </p>
         <p>
           Wirksames Notgroschen-Ziel (gespeicherter Stand):{' '}
-          <strong>
+          <strong className="computed-value">
             {savedOverride !== null
               ? `${formatEuro(effectiveEmergencyFundTarget(fund))} (manuell)`
               : `${formatEuro(effectiveEmergencyFundTarget(fund))} (automatisch berechnet)`}
@@ -448,9 +449,9 @@ function SettingsForm({
             </p>
           ) : null}
           <p id="settings-override-hint" className="app-hint">
-            Überschreibt die automatische Berechnung sofort nach Bestätigung (unabhängig vom
-            Formular-Speichern unten). Das Ziel „Notgroschen“ auf der Seite „Ziele“ nutzt den
-            wirksamen Wert automatisch; ein manueller Wert wird durch Neuberechnungen nie
+            Überschreibt die automatische Berechnung sofort nach Bestätigung (unabhängig von
+            „Einstellungen übernehmen“ unten). Das Ziel „Notgroschen“ auf der Seite „Ziele“ nutzt
+            den wirksamen Wert automatisch; ein manueller Wert wird durch Neuberechnungen nie
             ungefragt ersetzt (M12-Regel).
           </p>
           <div className="form-actions">
@@ -458,7 +459,12 @@ function SettingsForm({
               Übersteuerung setzen …
             </button>
             {savedOverride !== null ? (
-              <button type="button" onClick={handleResetOverride} disabled={isSaving}>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleResetOverride}
+                disabled={isSaving}
+              >
                 Auf automatische Berechnung zurücksetzen …
               </button>
             ) : null}
@@ -494,9 +500,12 @@ function SettingsForm({
           </select>
           {fieldError('decimals', 'settings-decimals-error')}
           <p id="settings-decimals-hint" className="app-hint">
-            Vorschau: {formatShare(PERCENT_PREVIEW_DECIMAL, decimals)} (Beispielwert 0,8008 –
-            gilt für alle Anteils- und Abweichungsanzeigen der App; die Renditeeingabe des
-            Simulators ist eine Parameter-Anzeige mit eigener Genauigkeit).
+            Vorschau:{' '}
+            <span className="computed-value">
+              {formatShare(PERCENT_PREVIEW_DECIMAL, decimals)}
+            </span>{' '}
+            (Beispielwert 0,8008 – gilt für alle Anteils- und Abweichungsanzeigen der App; die
+            Renditeeingabe des Simulators ist eine Parameter-Anzeige mit eigener Genauigkeit).
           </p>
         </div>
         <dl className="facts-list">
@@ -589,7 +598,7 @@ function SettingsForm({
         <button type="submit" disabled={isSaving}>
           Einstellungen übernehmen
         </button>
-        <button type="button" onClick={resetToSaved} disabled={isSaving}>
+        <button type="button" className="btn-danger" onClick={resetToSaved} disabled={isSaving}>
           Eingaben verwerfen
         </button>
       </div>
@@ -622,26 +631,12 @@ function SettingsRules() {
           ändert keine Sparpläne.
         </li>
         <li>
-          „Übernehmen“ ändert zunächst nur den Arbeitsspeicher (Kopfzeile zeigt „Ungespeicherte
-          Änderungen“) – in die Datei geschrieben wird erst beim Speichern unter „Daten &amp;
-          Backups“.
+          „Einstellungen übernehmen“, die Übersteuerung und die Zielprofil-Aktivierung ändern
+          zunächst nur den Arbeitsspeicher (Kopfzeile zeigt „Ungespeicherte Änderungen“) – dauerhaft
+          in deiner Datei landen sie erst über die Speichern-Schaltfläche oben rechts.
         </li>
       </ul>
     </details>
-  )
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
   )
 }
 
@@ -709,7 +704,9 @@ export function SettingsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
     if (error !== null) return error
     setFormStatus(
       changed
-        ? 'Einstellungen übernommen. Noch nicht in der Datei gespeichert – speichere über „Daten & Backups“ (die Kopfzeile zeigt „Ungespeicherte Änderungen“).'
+        ? 'Einstellungen übernommen. Noch nicht in der Datei gespeichert – das geschieht erst ' +
+            'über die Speichern-Schaltfläche oben rechts (die Kopfzeile zeigt „Ungespeicherte ' +
+            'Änderungen“).'
         : 'Keine Änderungen – der Bestand bleibt unverändert.',
     )
     // B1: Fokus auf die Statusmeldung – der key-Remount des Formulars (bei
@@ -888,8 +885,8 @@ export function SettingsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
             Sicherung jetzt erstellen
           </button>
           {/* B7: direkter Weg zur Wiederherstellung (Import) auch aus dieser Sektion. */}
-          <button type="button" onClick={onOpenDataBackups}>
-            Zu „Daten &amp; Backups“
+          <button type="button" className="btn-quiet" onClick={onOpenDataBackups}>
+            Zur Wiederherstellung (Daten &amp; Backups)
           </button>
         </div>
         {backupStatus !== null ? (
@@ -908,8 +905,9 @@ export function SettingsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
       <section aria-labelledby="settings-io-title">
         <h3 id="settings-io-title">Import &amp; Export</h3>
         <p>
-          Öffnen, Speichern, Export (Download) und Import mit Vorschau laufen zentral über die
-          Seite „Daten &amp; Backups“ – hier gibt es bewusst keine doppelten Datei-Aktionen.
+          Öffnen, Export (Download) und Import mit Vorschau laufen zentral über die Seite „Daten
+          &amp; Backups“, gespeichert wird über die Schaltfläche oben rechts – hier gibt es bewusst
+          keine doppelten Datei-Aktionen.
         </p>
         <p>Jede geladene oder importierte Datei durchläuft die vollständige Datenprüfung:</p>
         <ul>
@@ -923,8 +921,8 @@ export function SettingsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
           <li>Fachregeln und Warnungen (z. B. Snapshot-Schutz, leere Historien)</li>
         </ul>
         <div className="toolbar">
-          <button type="button" onClick={onOpenDataBackups}>
-            Zu „Daten &amp; Backups“
+          <button type="button" className="btn-quiet" onClick={onOpenDataBackups}>
+            Zu Daten &amp; Backups
           </button>
         </div>
         <p className="app-hint">

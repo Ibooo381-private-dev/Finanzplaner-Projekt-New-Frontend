@@ -89,7 +89,7 @@ function createRealSimulation(name: string, options?: { months?: string }): void
   if (options?.months !== undefined) {
     setField('Zeitraum in Monaten (1–1200) *', options.months)
   }
-  clickButton('Speichern')
+  clickButton('Simulation anlegen')
 }
 
 function createSmoothedSimulation(name: string): void {
@@ -97,7 +97,7 @@ function createSmoothedSimulation(name: string): void {
   setField('Name *', name)
   clickButton('Aktuelle Werte übernehmen')
   clickButton('Vorbelegung: geglättete Sparraten (Analysewerte)')
-  clickButton('Speichern')
+  clickButton('Simulation anlegen')
 }
 
 afterEach(() => {
@@ -109,7 +109,7 @@ describe('SimulatorPage – Leerzustände und Pflicht-Kennzeichnung', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Simulation' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('zeigt Pflicht-Banner, Trennungs-Hinweis, Projektionsstart (Folgemonat) und Export-Hinweis', () => {
@@ -225,7 +225,7 @@ describe('SimulatorPage – Anlegen mit Vorbelegungen (Auflage 2.4, G8/G9)', () 
     createRealSimulation('Basisszenario real')
     openNewSimulationForm()
     setField('Name *', 'Basisszenario real')
-    clickButton('Speichern')
+    clickButton('Simulation anlegen')
     expect(
       screen.getByText(/bereits eine Simulation mit diesem Namen/),
     ).toBeInTheDocument()
@@ -285,7 +285,7 @@ describe('SimulatorPage – Anlegen mit Vorbelegungen (Auflage 2.4, G8/G9)', () 
     const captured = renderPage()
     loadData(captured, loadExample())
     openNewSimulationForm()
-    clickButton('Speichern')
+    clickButton('Simulation anlegen')
     expect(screen.getByText('Der Name darf nicht leer sein.')).toBeInTheDocument()
     expect(document.activeElement).toBe(screen.getByLabelText('Name *'))
     expect(captured.current!.state.isDirty).toBe(false)
@@ -302,7 +302,7 @@ describe('SimulatorPage – Anlegen mit Vorbelegungen (Auflage 2.4, G8/G9)', () 
     // Über 15 % → feldnaher Fehler beim Absenden.
     setField('Name *', 'Zu optimistisch')
     setField('Jährliche Renditeannahme in Prozent (0–15)', '16')
-    clickButton('Speichern')
+    clickButton('Simulation anlegen')
     expect(
       screen.getByText(/Renditeannahme zwischen 0 und 15 Prozent/),
     ).toBeInTheDocument()
@@ -340,7 +340,7 @@ describe('SimulatorPage – Bearbeiten, Kopieren, Löschen (G12)', () => {
     createRealSimulation('Basisszenario real')
     const before = captured.current!.state.data
     clickButton('Simulation „Basisszenario real“ bearbeiten')
-    clickButton('Speichern')
+    clickButton('Änderungen übernehmen')
     // Kein applyDataChange: identische Referenz, kein neuer Bestand.
     expect(captured.current!.state.data).toBe(before)
   })
@@ -352,7 +352,7 @@ describe('SimulatorPage – Bearbeiten, Kopieren, Löschen (G12)', () => {
     clickButton('Simulation „Basisszenario real“ bearbeiten')
     expect(screen.getByLabelText('Name *')).toHaveValue('Basisszenario real')
     clickButton('60 Monate')
-    clickButton('Speichern')
+    clickButton('Änderungen übernehmen')
     expect(screen.getByText(/Zeitraum: 60 Monate/)).toBeInTheDocument()
     expect(captured.current!.state.data!.simulations[0].params.months).toBe(60)
   })
@@ -512,7 +512,7 @@ describe('SimulatorPage – Detailansicht (Tabelle primär, Chart nur Zusatz)', 
     clickButton('Aktuelle Werte übernehmen')
     clickButton('Vorbelegung: reale Sparraten')
     setField('Jährliche Renditeannahme in Prozent (0–15)', '5')
-    clickButton('Speichern')
+    clickButton('Simulation anlegen')
     clickButton('Simulation „Mit Annahme“ ansehen')
     expect(
       screen.getAllByText(/Projektion mit Annahme 5 % p\. a\. – keine Prognose, keine Anlageberatung/)
@@ -587,5 +587,81 @@ describe('SimulatorPage – Qualitätsregeln', () => {
     expect(region).toHaveAttribute('tabindex', '0')
     // Detail-Fokus-Anker: Überschrift erhält den Fokus.
     expect(document.getElementById('sim-detail-title')).not.toBeNull()
+  })
+})
+
+describe('SimulatorPage – Redesign: Beschriftungen, Button-Hierarchie, Zahlenspalten', () => {
+  it('Anlegen: „Neue Simulation“ ist primär (Icon rein dekorativ), Absenden heißt „Simulation anlegen“', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    const newButton = screen.getByRole('button', { name: 'Neue Simulation' })
+    expect(newButton).toHaveClass('btn-primary')
+    expect(newButton.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    openNewSimulationForm()
+    const form = screen.getByRole('form', { name: 'Neue Simulation' })
+    expect(within(form).getByRole('button', { name: 'Simulation anlegen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    // „Speichern“ ist der Datei vorbehalten – das Formular zitiert den neuen Namen.
+    expect(within(form).queryByRole('button', { name: 'Speichern' })).toBeNull()
+    expect(within(form).getByText(/erst mit „Simulation anlegen“\./)).toBeInTheDocument()
+  })
+
+  it('Bearbeiten: Absenden heißt „Änderungen übernehmen“; Löschen/Entfernen sind Gefahr-Buttons', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    createRealSimulation('Basisszenario real')
+    expect(
+      screen.getByRole('button', { name: 'Simulation „Basisszenario real“ löschen' }),
+    ).toHaveClass('btn-danger')
+    clickButton('Simulation „Basisszenario real“ bearbeiten')
+    const form = screen.getByRole('form', { name: 'Simulation bearbeiten: Basisszenario real' })
+    expect(within(form).getByRole('button', { name: 'Änderungen übernehmen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(form).getByText(/erst mit „Änderungen übernehmen“\./)).toBeInTheDocument()
+    expect(within(form).getByRole('button', { name: 'Beitrag 1 entfernen' })).toHaveClass(
+      'btn-danger',
+    )
+  })
+
+  it('Zahlenspalten der Verlaufs- und Vergleichstabelle sind als „num“ ausgezeichnet', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    createRealSimulation('Real')
+    createSmoothedSimulation('Geglättet')
+    clickButton('Simulation „Real“ ansehen')
+    const verlauf = screen.getByRole('region', { name: 'Verlaufstabelle (horizontal scrollbar)' })
+    expect(within(verlauf).getByRole('columnheader', { name: 'Gesamtvermögen' })).toHaveClass('num')
+    expect(within(verlauf).getByRole('columnheader', { name: 'Monat' })).not.toHaveClass('num')
+    expect(within(verlauf).getAllByText(euroText(3150.06))[0]).toHaveClass('num')
+    act(() => {
+      fireEvent.click(screen.getByLabelText('Real (vom 19.07.2026)'))
+      fireEvent.click(screen.getByLabelText('Geglättet (vom 19.07.2026)'))
+    })
+    const vergleich = screen.getByRole('region', {
+      name: 'Vergleichstabelle (horizontal scrollbar)',
+    })
+    expect(within(vergleich).getByRole('columnheader', { name: 'Real' })).toHaveClass('num')
+    expect(within(vergleich).getAllByText(euroText(6150.06))[0]).toHaveClass('num')
+    // Textzeilen (Sicht, Zielerreichung) bleiben linksbündig.
+    expect(within(vergleich).getByText('reale Sicht')).not.toHaveClass('num')
+  })
+
+  it('Zielanalyse: Status als Plakette – Symbol und Text bleiben unverändert', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    createRealSimulation('Langfrist', { months: '120' })
+    clickButton('Simulation „Langfrist“ ansehen')
+    const heading = screen.getByText('10.000 EUR Depot').closest('p')
+    expect(heading).not.toBeNull()
+    expect(heading!.textContent).toBe('10.000 EUR Depot – ✓ Erreichbar')
+    expect(within(heading!).getByText('✓ Erreichbar')).toHaveClass('badge', 'badge--ok')
+    expect(screen.getAllByText('⚠ Im Horizont nicht erreicht')[0]).toHaveClass(
+      'badge',
+      'badge--warn',
+    )
   })
 })

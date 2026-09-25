@@ -67,7 +67,15 @@ export function AppLayout({ initialPage = DEFAULT_PAGE }: { initialPage?: PageId
 
   return (
     <div className="app-shell" ref={shellRef}>
-      <a className="skip-link" href="#app-main">
+      <a
+        className="skip-link"
+        href="#app-main"
+        onClick={(event) => {
+          // Fokus explizit setzen – reines Fragment-Springen fokussiert nicht in jedem Browser.
+          event.preventDefault()
+          mainRef.current?.focus()
+        }}
+      >
         Zum Inhalt springen
       </a>
       <AppHeader />

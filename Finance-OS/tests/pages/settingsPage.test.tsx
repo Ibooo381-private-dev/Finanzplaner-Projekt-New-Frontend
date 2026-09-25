@@ -111,7 +111,7 @@ describe('SettingsPage – Leerzustand und Grundgerüst', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Einstellungen' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('zeigt Pflichtfeld-Legende, Sektionen und den localStorage-Transparenzhinweis', () => {
@@ -137,13 +137,13 @@ describe('SettingsPage – Leerzustand und Grundgerüst', () => {
     expect(bodyText()).toContain('kein direktes Datei-Handle')
   })
 
-  it('„Zu „Daten & Backups““ ruft den Navigations-Callback auf', () => {
+  it('„Zu Daten & Backups“ ruft den Navigations-Callback auf', () => {
     const onOpen = vi.fn()
     const captured = renderPage(onOpen)
     loadData(captured, loadExample())
     const ioRegion = screen.getByRole('region', { name: 'Import & Export' })
     act(() => {
-      within(ioRegion).getByRole('button', { name: 'Zu „Daten & Backups“' }).click()
+      within(ioRegion).getByRole('button', { name: 'Zu Daten & Backups' }).click()
     })
     expect(onOpen).toHaveBeenCalledTimes(1)
   })
@@ -535,5 +535,77 @@ describe('SettingsPage – Datenqualität', () => {
     expect(text).not.toContain('undefined')
     // Profil-/Konto-IDs erscheinen nie im Endnutzertext (nur Namen).
     expect(text).not.toMatch(/\b(?:acc|pos|goal|plan|tp|sim)-[a-z0-9]+(?:-[a-z0-9]+)*\b/)
+  })
+})
+
+describe('SettingsPage – Redesign: Button-Hierarchie und berechnete Werte', () => {
+  it('„Eingaben verwerfen“ ist Gefahr-Aktion, „Einstellungen übernehmen“ bleibt Absenden', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    expect(screen.getByRole('button', { name: 'Eingaben verwerfen' })).toHaveClass('btn-danger')
+    const submit = screen.getByRole('button', { name: 'Einstellungen übernehmen' })
+    expect(submit).toHaveAttribute('type', 'submit')
+    expect(submit).not.toHaveClass('btn-danger')
+    // Übersteuerung setzen ist keine Gefahr-Aktion; das Zurücksetzen (Entfernen) schon.
+    expect(screen.getByRole('button', { name: 'Übersteuerung setzen …' })).not.toHaveClass(
+      'btn-danger',
+    )
+  })
+
+  it('Rücksetzen der Übersteuerung ist als Gefahr-Aktion markiert', () => {
+    const captured = renderPage()
+    loadData(captured, exampleWithOverride(5000))
+    expect(
+      screen.getByRole('button', { name: 'Auf automatische Berechnung zurücksetzen …' }),
+    ).toHaveClass('btn-danger')
+  })
+
+  it('Navigations-Buttons zu „Daten & Backups“ sind leise und rufen den Callback auf', () => {
+    const onOpen = vi.fn()
+    const captured = renderPage(onOpen)
+    loadData(captured, loadExample())
+    const backupRegion = screen.getByRole('region', { name: 'Sicherung & Wiederherstellung' })
+    const restoreButton = within(backupRegion).getByRole('button', {
+      name: 'Zur Wiederherstellung (Daten & Backups)',
+    })
+    expect(restoreButton).toHaveClass('btn-quiet')
+    act(() => {
+      restoreButton.click()
+    })
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    const ioRegion = screen.getByRole('region', { name: 'Import & Export' })
+    expect(within(ioRegion).getByRole('button', { name: 'Zu Daten & Backups' })).toHaveClass(
+      'btn-quiet',
+    )
+    // Die Hauptaktion der Sicherungs-Sektion bleibt ein normaler Button.
+    expect(
+      within(backupRegion).getByRole('button', { name: 'Sicherung jetzt erstellen' }),
+    ).not.toHaveClass('btn-quiet')
+  })
+
+  it('Live-Vorschauen sind als berechnete Werte gekennzeichnet (Text unverändert)', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    const notgroschen = screen.getByText(`4 × ${euroText(1170)} = ${euroText(4680)}`)
+    expect(notgroschen).toHaveClass('computed-value')
+    expect(screen.getByText(`${euroText(4680)} (automatisch berechnet)`)).toHaveClass(
+      'computed-value',
+    )
+    expect(screen.getByText('80,08 %')).toHaveClass('computed-value')
+    // Der Hinweis am Select liefert weiterhin den vollständigen Vorschau-Text.
+    expect(
+      screen.getByLabelText('Dezimalstellen der Prozentanzeige (0–4)'),
+    ).toHaveAccessibleDescription(/^Vorschau: 80,08 % \(Beispielwert 0,8008 – gilt für alle/)
+  })
+
+  it('Übernehmen-Hinweis verweist auf die Speichern-Schaltfläche oben rechts', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    setField('Monatliches Netto in Euro *', '1.500')
+    clickButton('Einstellungen übernehmen')
+    const status = screen.getByText(/Einstellungen übernommen/)
+    expect(status.textContent).toContain('Noch nicht in der Datei gespeichert')
+    expect(status.textContent).toContain('Speichern-Schaltfläche oben rechts')
+    expect(bodyText()).not.toContain('Formular-Speichern')
   })
 })

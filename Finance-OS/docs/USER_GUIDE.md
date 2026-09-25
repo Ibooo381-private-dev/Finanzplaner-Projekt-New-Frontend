@@ -18,19 +18,19 @@ Am einfachsten: `scripts\start-dev.bat` doppelklicken. Das Skript prüft Node/np
 
 ## 4. Finanzdatei öffnen
 
-Seite **„Daten & Backups“** → „Datei öffnen“. In Chrome/Edge wählst du die JSON-Datei direkt und kannst später in dieselbe Datei speichern; in Firefox/Safari wird die Datei eingelesen und Speichern läuft über Downloads. Als Startvorlage dient `user-data/finance-data.example.json`.
+Ohne geladene Datei direkt auf der Startseite oder unter **„Daten & Backups“** → „Datei öffnen …“. In Chrome/Edge wählst du die JSON-Datei direkt und kannst später in dieselbe Datei speichern; in Firefox/Safari wird die Datei eingelesen und Speichern läuft über Downloads. Als Startvorlage dient `user-data/finance-data.example.json`.
 
 ## 5. Neue Finanzdatei erstellen
 
-„Daten & Backups“ → „Neue leere Datei“. Es entsteht ein leerer, gültiger Datenbestand (schemaVersion 1), den du anschließend speicherst und befüllst.
+Startseite oder „Daten & Backups“ → „Neue leere Datei anlegen“. Es entsteht ein leerer, gültiger Datenbestand (schemaVersion 1), den du anschließend speicherst und befüllst.
 
 ## 6. Speichern
 
-Kopfbereich oder „Daten & Backups“ → „Speichern“. In Chrome/Edge wird nach Browser-Freigabe direkt in die geöffnete Datei geschrieben; danach lädt die App automatisch eine datierte Sicherungskopie herunter (Modus siehe Einstellungen). Ohne Direktspeichern bietet die App den Download-Fallback an. Ein Tastenkürzel (Strg+S) gibt es in V1 nicht.
+Kopfbereich (auf jeder Seite) oder „Daten & Backups“ → „In Datei speichern“ (Browser ohne Direktspeichern: „Als Download speichern“). Wichtig: Die Formular-Buttons („… anlegen“, „Änderungen übernehmen“, „Wert übernehmen“) übernehmen Eingaben nur in den Arbeitsspeicher – in die Datei gelangen sie erst mit diesem Speichern; der Kopfbereich zeigt bis dahin „● Ungespeicherte Änderungen“. In Chrome/Edge wird nach Browser-Freigabe direkt in die geöffnete Datei geschrieben; danach lädt die App automatisch eine datierte Sicherungskopie herunter (Modus siehe Einstellungen). Ohne Direktspeichern bietet die App den Download-Fallback an. Ein Tastenkürzel (Strg+S) gibt es in V1 nicht.
 
 ## 7. „Speichern unter“
 
-„Daten & Backups“ → „Speichern unter“ (nur Chrome/Edge): schreibt den Bestand in eine neue Datei und verbindet die App mit dieser Datei.
+„Daten & Backups“ → „Speichern unter …“ (nur Chrome/Edge): schreibt den Bestand in eine neue Datei und verbindet die App mit dieser Datei.
 
 ## 8. Backup erstellen
 
@@ -38,7 +38,7 @@ Automatisch: nach jedem erfolgreichen direkten Speichern (Modus „bei jedem Spe
 
 ## 9. Backup wiederherstellen
 
-Wiederherstellung = **Import** der Sicherungsdatei: „Daten & Backups“ → Import → Backup-Datei wählen → Vorschau prüfen → bestätigen → anschließend speichern. Es gibt keinen separaten Wiederherstellungs-Kanal – das ist beabsichtigt (ein geprüfter Weg).
+Wiederherstellung = **Import** der Sicherungsdatei: „Daten & Backups“ → Karte „Importieren“ → Backup-Datei wählen → Vorschau prüfen → „Bestand durch Import ersetzen“ → anschließend speichern. Es gibt keinen separaten Wiederherstellungs-Kanal – das ist beabsichtigt (ein geprüfter Weg).
 
 ## 10. Importvorschau verstehen
 
@@ -54,7 +54,7 @@ Konten anlegen/bearbeiten (Name, Institut, Typ, Zweckbindung), Salden als **neue
 
 ## 13. Depot
 
-Positionen anlegen/bearbeiten/deaktivieren, Werte datiert erfassen, **Snapshot-Vollerfassung** (alle aktiven Positionen + Tagesgeldkonten zu einem Datum; nach dem Speichern gesperrt – Korrekturen nur als neuer Snapshot), Depot-Gewichtung inkl. „MSCI World gesamt“ und Zielvergleich (nur Anzeige, ändert nichts).
+Positionen anlegen/bearbeiten/deaktivieren, Werte datiert erfassen, **Snapshot-Vollerfassung** (alle aktiven Positionen + Tagesgeldkonten zu einem Datum; nach „Snapshot übernehmen“ gesperrt – Korrekturen nur als neuer Snapshot), Depot-Gewichtung inkl. „MSCI World gesamt“ und Zielvergleich (nur Anzeige, ändert nichts).
 
 ## 14. Sparpläne
 
@@ -66,7 +66,7 @@ Zielarten: Sparrate, Depotwert, Gesamtvermögen, Kontostand, Positionswert, manu
 
 ## 16. Rebalancing
 
-Analyse der Abweichung zwischen Ist-Depot und Zielprofil (lokale Vergleichsauswahl – das globale Profil bleibt unverändert), Handlungsempfehlungen ausschließlich als „könntest du“-Formulierungen ab definierten Schwellen, Sparraten-Vorschlag, Kauf-/Verkaufs-Simulation („wird nie automatisch übernommen“). Empfehlungen können nach Bestätigung als **Planung** gespeichert werden („geplant, nicht ausgeführt“) und lassen sich verwerfen; Ist-Daten ändern sie nie.
+Analyse der Abweichung zwischen Ist-Depot und Zielprofil (lokale Vergleichsauswahl – das globale Profil bleibt unverändert), Handlungsempfehlungen ausschließlich als „könntest du“-Formulierungen ab definierten Schwellen, Sparraten-Vorschlag, Kauf-/Verkaufs-Simulation („wird nie automatisch übernommen“). Empfehlungen können nach Bestätigung mit „Als geplante Einstellung vormerken“ als **Planung** vorgemerkt werden („geplant, nicht ausgeführt“) und lassen sich verwerfen; Ist-Daten ändern sie nie.
 
 ## 17. Simulator
 

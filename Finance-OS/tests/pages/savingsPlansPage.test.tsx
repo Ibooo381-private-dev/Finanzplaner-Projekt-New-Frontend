@@ -1,7 +1,7 @@
 /**
  * UI-Tests des Moduls „Sparpläne und Zuflüsse“ (M10): Summen (real/geglättet,
  * Jahressicht, Monats-Realsicht), Liste inkl. Filter/Sortierung/Statusgruppen,
- * Formulare (A→B-Wechsel, Abbruch, unverändertes Speichern, deutsche Beträge),
+ * Formulare (A→B-Wechsel, Abbruch, unverändertes Übernehmen, deutsche Beträge),
  * Pausieren/Beenden mit Bestätigung, 1.000-€-Sparziel (U3), F10-Referenz und
  * Datenqualität (keine technischen IDs, kein NaN, G11).
  * Muster wie tests/pages/dashboardPage.test.tsx (echter Provider + Capture +
@@ -123,7 +123,7 @@ describe('SavingsPlansPage – Leerzustände', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Sparpläne' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('Bestand ohne Sparpläne: verständlicher Leerzustand mit nächstem Schritt', () => {
@@ -335,7 +335,7 @@ describe('SavingsPlansPage – Formulare', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sparplan hinzufügen' }))
     fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Neuer ETF Plan' } })
     fireEvent.change(screen.getByLabelText('Betrag in Euro *'), { target: { value: '1.234' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
     const row = screen.getByRole('rowheader', { name: 'Neuer ETF Plan' }).closest('tr')!
     // Betrag erscheint in der Zeile (Betrags- UND Geglättet-Spalte bei monatlich).
     expect(within(row as HTMLElement).getAllByText(euroText(1234)).length).toBeGreaterThan(0)
@@ -353,7 +353,7 @@ describe('SavingsPlansPage – Formulare', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Sparplan hinzufügen' }))
       fireEvent.change(screen.getByLabelText('Name *'), { target: { value: name } })
       fireEvent.change(screen.getByLabelText('Betrag in Euro *'), { target: { value: text } })
-      fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
       const row = screen.getByRole('rowheader', { name }).closest('tr')!
       expect(within(row as HTMLElement).getAllByText(euroText(expected)).length).toBeGreaterThan(0)
     }
@@ -366,13 +366,13 @@ describe('SavingsPlansPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Fehlerplan' } })
     const amountInput = screen.getByLabelText('Betrag in Euro *')
     fireEvent.change(amountInput, { target: { value: '12.34' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
     expect(
       screen.getByText('Bitte einen gültigen Betrag eingeben (z. B. 250,00 oder 1.234,56).'),
     ).toBeInTheDocument()
     expect(amountInput).toHaveAttribute('aria-invalid', 'true')
     fireEvent.change(amountInput, { target: { value: '-5' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
     expect(screen.getByText('Der Betrag darf nicht negativ sein.')).toBeInTheDocument()
     expect(captured.current!.state.isDirty).toBe(false)
   })
@@ -387,7 +387,7 @@ describe('SavingsPlansPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Enddatum (optional)'), {
       target: { value: '2026-07-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
     expect(screen.getByText('Das Enddatum darf nicht vor dem Startdatum liegen.')).toBeInTheDocument()
     expect(captured.current!.state.isDirty).toBe(false)
   })
@@ -416,13 +416,13 @@ describe('SavingsPlansPage – Formulare', () => {
     expect(screen.queryByRole('rowheader', { name: 'Anderer Name' })).toBeNull()
   })
 
-  it('unverändertes Speichern löst KEIN applyDataChange aus (Vergleich vor Übernahme)', () => {
+  it('unverändertes Übernehmen löst KEIN applyDataChange aus (Vergleich vor Übernahme)', () => {
     const captured = renderPage()
     loadData(captured, loadExample())
     fireEvent.click(screen.getByRole('button', { name: 'Sparplan „VL Eigenanteil“ bearbeiten' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Änderungen übernehmen' }))
     expect(captured.current!.state.isDirty).toBe(false)
-    // Formular ist geschlossen (Speichern ohne Änderung ist ein stiller Abschluss).
+    // Formular ist geschlossen (Übernehmen ohne Änderung ist ein stiller Abschluss).
     expect(screen.queryByLabelText('Name *')).toBeNull()
   })
 
@@ -431,7 +431,7 @@ describe('SavingsPlansPage – Formulare', () => {
     loadData(captured, loadExample())
     fireEvent.click(screen.getByRole('button', { name: 'Sparplan „VL Eigenanteil“ bearbeiten' }))
     fireEvent.change(screen.getByLabelText('Betrag in Euro *'), { target: { value: '40' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Änderungen übernehmen' }))
     const row = screen.getByRole('rowheader', { name: 'VL Eigenanteil' }).closest('tr')!
     expect(within(row as HTMLElement).getAllByText(euroText(40)).length).toBeGreaterThan(0)
     expect(captured.current!.state.isDirty).toBe(true)
@@ -469,7 +469,7 @@ describe('SavingsPlansPage – Formulare', () => {
       screen.getByText(/Das Startdatum ist bei einmaligen Zuflüssen das Ausführungsdatum/),
     ).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Betrag in Euro *'), { target: { value: '500' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan anlegen' }))
     const row = screen.getByRole('rowheader', { name: 'Sonderzahlung Gold' }).closest('tr')!
     expect(within(row as HTMLElement).getByText('einmalig')).toBeInTheDocument()
     expect(within(row as HTMLElement).getByText(`${euroText(500)} (einmalig)`)).toBeInTheDocument()
@@ -734,5 +734,75 @@ describe('Budget-Warnung gegen das M14-Sparbudget (M10-Restpunkt, S2)', () => {
     const captured = renderPage()
     loadData(captured, withBudget(null))
     expect(within(sumsRegion()).queryByText(WARNING_RE)).toBeNull()
+  })
+})
+
+describe('SavingsPlansPage – Redesign: klare Beschriftungen und Darstellung', () => {
+  it('Formular-Submit: „Sparplan anlegen“ bzw. „Änderungen übernehmen“ – nie „Speichern“', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan hinzufügen' }))
+    const addForm = screen.getByRole('form', { name: 'Sparplan hinzufügen' })
+    expect(within(addForm).getByRole('button', { name: 'Sparplan anlegen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(addForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+    fireEvent.click(within(addForm).getByRole('button', { name: 'Abbrechen' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sparplan „VL Eigenanteil“ bearbeiten' }))
+    const editForm = screen.getByRole('form', { name: 'Sparplan bearbeiten: VL Eigenanteil' })
+    expect(
+      within(editForm).getByRole('button', { name: 'Änderungen übernehmen' }),
+    ).toHaveAttribute('type', 'submit')
+    expect(within(editForm).queryByRole('button', { name: 'Sparplan anlegen' })).toBeNull()
+    expect(within(editForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+  })
+
+  it('„Sparplan hinzufügen“ ist primär mit dekorativem Plus-Icon (Name unverändert)', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    const addButton = screen.getByRole('button', { name: 'Sparplan hinzufügen' })
+    expect(addButton).toHaveClass('btn-primary')
+    expect(addButton.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('Zeilenaktionen: „Beenden“ ist als Gefahr-Aktion markiert, Pausieren/Bearbeiten nicht', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    expect(
+      screen.getByRole('button', { name: 'Sparplan „TR Sparplan Physical Gold“ beenden' }),
+    ).toHaveClass('btn-danger')
+    expect(
+      screen.getByRole('button', { name: 'Sparplan „TR Sparplan Physical Gold“ pausieren' }),
+    ).not.toHaveClass('btn-danger')
+    expect(
+      screen.getByRole('button', { name: 'Sparplan „TR Sparplan Physical Gold“ bearbeiten' }),
+    ).not.toHaveClass('btn-danger')
+  })
+
+  it('Status als Plakette (Text + Symbol unverändert); Betragsspalten rechtsbündig (num)', () => {
+    const captured = renderPage()
+    loadData(captured, withPlanPatched(loadExample(), 'sp-tr-gold', { isPaused: true }))
+    const row = screen.getByRole('rowheader', { name: 'VL Eigenanteil' }).closest('tr')!
+    expect(within(row as HTMLElement).getByText('● Aktiv')).toHaveClass('badge', 'badge--ok')
+    expect(within(planTable()).getByText('⏸ Pausiert')).toHaveClass('badge', 'badge--warn')
+    for (const name of ['Betrag', 'Jahresbetrag']) {
+      expect(within(planTable()).getByRole('button', { name }).closest('th')).toHaveClass('num')
+    }
+    expect(
+      within(planTable()).getByRole('columnheader', {
+        name: 'Monatsbetrag geglättet (Analysewert)',
+      }),
+    ).toHaveClass('num')
+    // Betrag, Jahresbetrag und geglätteter Monatsbetrag der Zeile: alle in num-Zellen.
+    const amountCells = [
+      ...within(row as HTMLElement).getAllByText(euroText(33.5)),
+      within(row as HTMLElement).getByText(euroText(402)),
+    ]
+    expect(amountCells).toHaveLength(3)
+    for (const cell of amountCells) {
+      expect(cell.closest('td')).toHaveClass('num')
+    }
   })
 })

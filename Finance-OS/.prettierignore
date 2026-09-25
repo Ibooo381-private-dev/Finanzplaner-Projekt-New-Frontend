@@ -1,0 +1,11 @@
+dist
+node_modules
+docs
+reference
+backups
+user-data
+progress.md
+README.md
+CLAUDE.md
+.claude
+package-lock.json

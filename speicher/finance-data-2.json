@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "appName": "Finance OS",
+    "createdAt": "2026-07-19T10:09:01.950Z",
+    "updatedAt": "2026-07-19T10:09:12.088Z",
+    "currency": "EUR",
+    "isExampleData": false,
+    "description": "Neue leere Finanzdatei. Notgroschen-Einstellungen mit dokumentierten Standardwerten vorbelegt (Faktor 4, Netto 1.170 EUR laut requirements.md M14) - in den Einstellungen anpassen."
+  },
+  "settings": {
+    "emergencyFund": {
+      "factor": 4,
+      "netIncomeMonthly": 1170,
+      "manualOverrideAmount": null
+    },
+    "monthlySavingsBudget": null,
+    "backup": {
+      "mode": "everySave",
+      "retentionCount": 10
+    },
+    "display": {
+      "numberLocale": "de-DE",
+      "percentDecimals": 2
+    },
+    "activeTargetProfileId": null
+  },
+  "accounts": [],
+  "portfolioPositions": [],
+  "snapshots": [],
+  "savingsPlans": [],
+  "targetProfiles": [],
+  "goals": [],
+  "transactions": [],
+  "plannedChanges": [],
+  "simulations": [],
+  "fixedCosts": [],
+  "monthlyClosings": [],
+  "journalEntries": [],
+  "importHistory": []
+}

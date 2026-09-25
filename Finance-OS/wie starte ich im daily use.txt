@@ -1,0 +1,45 @@
+Dein normaler Start in einer neuen Sitzung
+
+Jedes Mal:
+
+cd C:\Finance-OS
+claude
+
+Dann:
+
+Lies zuerst CLAUDE.md, progress.md und die für die Aufgabe relevanten Dokumente.
+
+Fasse in höchstens zehn Punkten zusammen:
+
+- aktueller Projektstand
+- offene Probleme
+- zuletzt abgeschlossene Phase
+- nächster sinnvoller kleiner Schritt
+
+Nimm noch keine Änderungen vor.
+
+Danach gibst du eine einzelne Aufgabe, zum Beispiel:
+
+Setze als Nächstes ausschließlich die Bearbeitung bestehender Sparpläne um.
+
+Nutze frontend-developer für die Implementierung, calculation-tester für die Tests und reviewer für die Abschlussprüfung.
+
+Ändere keine anderen Module.
+
+
+
+So verwendest du Skills und Agenten im Alltag
+
+Du musst keine komplizierte Syntax kennen. Formuliere einfach ausdrücklich:
+
+Nutze den Skill rebalancing und lass den finance-analyst zuerst die fachliche Logik prüfen.
+
+Oder:
+
+Lass den calculation-tester für diesen Fehler zuerst einen reproduzierbaren Test schreiben. Ändere den Produktivcode noch nicht.
+
+Oder:
+
+Lass den reviewer die aktuelle Phase nur prüfen. Er darf keine Dateien ändern.
+
+Claude Code kann Skills und Subagenten auch automatisch auswählen. Explizite Nennung ist für den Einstieg trotzdem besser, weil du die Kontrolle über die Arbeitsteilung behältst.

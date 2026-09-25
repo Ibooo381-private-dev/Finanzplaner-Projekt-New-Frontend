@@ -1,0 +1,20 @@
+Finance OS – Lizenzhinweis / License Notice
+
+Copyright (c) 2026 Ibrahim Swaid. Alle Rechte vorbehalten. / All rights reserved.
+
+Dies ist ein privates Einzelprojekt für die persönliche Finanzverwaltung des
+Urhebers (package.json: "private": true). Es wird KEINE Open-Source-Lizenz
+erteilt. Ohne ausdrückliche schriftliche Zustimmung des Urhebers sind
+insbesondere nicht gestattet:
+
+- Vervielfältigung, Weitergabe oder Veröffentlichung des Quellcodes oder von
+  Builds,
+- kommerzielle oder nicht-kommerzielle Nutzung durch Dritte,
+- Bearbeitung oder Weiterverbreitung abgeleiteter Werke.
+
+Die private Nutzung durch den Urheber selbst ist uneingeschränkt.
+
+Hinweis: Die Anwendung ist ein reines Analyse-, Planungs- und
+Dokumentationswerkzeug und stellt keine Anlage-, Rechts- oder Steuerberatung
+dar. Die Abhängigkeiten des Projekts (siehe package.json) stehen unter ihren
+jeweiligen eigenen Lizenzen.

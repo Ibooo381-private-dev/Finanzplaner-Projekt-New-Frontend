@@ -1,0 +1,16 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# M16 Release-Engineering: Laufzeit- und Ausgabeordner (nie committen)
+.runtime/
+project-backups/
+releases/
+
+# Lokales Sicherungsziel der App (kann echte Finanzdaten enthalten)
+backups/
+
+# Echte Finanzdateien neben der Beispieldatei nie committen (GitHub-Remote!)
+user-data/*
+!user-data/*.example.json

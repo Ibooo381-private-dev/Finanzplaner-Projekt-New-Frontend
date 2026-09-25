@@ -1,0 +1,739 @@
+:root {
+  color-scheme: light dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Sichtbare Fokuszustände für alle Bedienelemente (Tastaturbedienung). */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* --- Grundgerüst: Kopfbereich oben, darunter Seitenleiste + Inhalt --- */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.5rem;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.45);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.header-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.header-status div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.header-status dt {
+  font-weight: 600;
+}
+
+.header-status dd {
+  margin: 0;
+}
+
+/* Ungespeichert-Hinweis: Text + Symbol, zusätzlich deutlich gerahmt. */
+.dirty-indicator {
+  margin: 0;
+  font-weight: 700;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  padding: 0 0.75rem;
+}
+
+.saved-indicator {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+/* --- Navigation: Desktop feste Seitenleiste, mobil einklappbar --- */
+
+.app-nav {
+  flex: 0 0 13rem;
+  border-right: 1px solid rgba(128, 128, 128, 0.45);
+  padding: 1rem 0.75rem;
+}
+
+.nav-toggle {
+  display: none;
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: rgba(128, 128, 128, 0.16);
+}
+
+/* Aktiver Punkt: Marker-Symbol + Schriftstärke + Balken – nicht nur Farbe. */
+.nav-item[aria-current='page'] {
+  font-weight: 700;
+  border-left-color: currentcolor;
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.nav-marker {
+  display: inline-block;
+  width: 1rem;
+}
+
+/* --- Inhaltsbereich --- */
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 52rem;
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+.app-main h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.45rem;
+}
+
+.app-main h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.app-main h4 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 1rem;
+}
+
+.app-hint {
+  opacity: 0.75;
+}
+
+/* Startzustand ohne geladene Datei: Hinweis + direkter Weg zu Daten & Backups. */
+.start-hint {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  max-width: 36rem;
+}
+
+.start-hint p {
+  margin-top: 0;
+}
+
+.start-hint button {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.toolbar button {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.import-field {
+  margin: 0.75rem 0;
+}
+
+.operation-error {
+  border: 1px solid currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+}
+
+.issue-box {
+  border: 1px solid currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+
+.issue-box h3 {
+  margin: 0 0 0.5rem;
+}
+
+.issue-box ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.issue-box-error {
+  border-width: 2px;
+}
+
+.issue-box code {
+  word-break: break-all;
+}
+
+.import-preview {
+  border: 2px solid currentcolor;
+  border-radius: 0.35rem;
+  padding: 1rem;
+  margin: 1.5rem 0;
+}
+
+.import-preview h3 {
+  margin-top: 0;
+}
+
+.counts {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+/* --- Konten-Seite (M8) --- */
+
+/* Nur für Screenreader sichtbar (z. B. Tabellen-caption). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* Als fokussierbare Region (tabindex=0): sichtbarer Fokus für Tastatur-Scrollen. */
+.table-wrap:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.accounts-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.accounts-table th,
+.accounts-table td {
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.accounts-table thead th {
+  font-weight: 600;
+}
+
+.accounts-table tbody th {
+  font-weight: 600;
+}
+
+.sort-button {
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.row-actions button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.row-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-form {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  max-width: 36rem;
+}
+
+.account-form h3 {
+  margin-top: 0;
+}
+
+.form-field {
+  margin: 0 0 0.75rem;
+}
+
+.form-field > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.form-field input[type='text'],
+.form-field input[type='date'],
+.form-field select {
+  font: inherit;
+  width: 100%;
+  max-width: 24rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.form-field-checkbox > label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.form-field-checkbox .app-hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* Fehler neben dem betroffenen Feld: Rahmen + Symbolik über Text, nicht nur Farbe. */
+.field-error {
+  border: 1px solid currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+  max-width: 24rem;
+}
+
+.form-actions {
+  display: flex;
+  /* B8 (M14): lange Beschriftungen dürfen umbrechen statt zu überlaufen. */
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.form-actions button {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+/* Einstellungen (M14): thematische Feldgruppen innerhalb des einen Formulars. */
+.settings-form {
+  max-width: 44rem;
+}
+
+.settings-fieldset {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.settings-fieldset legend {
+  font-weight: 700;
+  padding: 0 0.35rem;
+}
+
+.model-hint {
+  margin: 0.75rem 0;
+  max-width: 44rem;
+}
+
+.model-hint summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sum-line {
+  margin: 0.75rem 0 0.25rem;
+}
+
+/* --- Depot-Seite (M9) --- */
+
+/* Kennzahlen-Kacheln: max. 4 pro Gruppe, responsiv umbrechend. */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+  max-width: 52rem;
+}
+
+.kpi-tile {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.kpi-tile dt {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.kpi-tile dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* Warnhinweise mit Text + Symbol (Farbe nie einziges Signal). */
+.warning-note {
+  border: 1px solid currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.75rem 0;
+  max-width: 44rem;
+}
+
+.warning-note p {
+  margin: 0;
+}
+
+.warning-note ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.success-note {
+  border: 1px solid currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.75rem 0;
+  font-weight: 600;
+  max-width: 44rem;
+}
+
+/* Feldnahe Warnung (kein Fehler, blockiert nicht). */
+.field-warning {
+  border: 1px dashed currentcolor;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0.35rem 0 0;
+  max-width: 24rem;
+  font-size: 0.9rem;
+}
+
+/* Snapshot-Vollerfassung: Gruppen mit je einem Betragsfeld pro Eintrag. */
+.snapshot-form {
+  max-width: 44rem;
+}
+
+.snapshot-group {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.75rem 0.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.snapshot-group legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.snapshot-entry-state {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+/* --- Übersicht / Dashboard (M7) --- */
+
+/* Kompakte Fakten-Liste (Dateistatus, „Weitere Kennzahlen“). */
+.facts-list {
+  margin: 0.5rem 0;
+}
+
+.facts-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  padding: 0.1rem 0;
+}
+
+.facts-list dt {
+  font-weight: 600;
+}
+
+.facts-list dd {
+  margin: 0;
+}
+
+/* Zusatztext in KPI-Kacheln (Untertext / „enthält unbekannte Werte“) – Text, nie nur Farbe. */
+.kpi-note {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.85;
+  margin-top: 0.15rem;
+}
+
+.goal-list {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44rem;
+}
+
+.goal-list > li {
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.goal-list p {
+  margin: 0.2rem 0;
+}
+
+/* Kopfzeile eines Ziel-Eintrags (Name + Status). */
+.goal-heading {
+  margin: 0 0 0.25rem;
+}
+
+/* Barrierearme Fortschrittsanzeige: <progress> plus sichtbarer Textwert daneben. */
+.goal-progress progress {
+  width: min(14rem, 60%);
+  vertical-align: middle;
+}
+
+.quality-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+/* --- Rebalancing (M11): unübersehbare Simulations-Kennzeichnung --- */
+
+.simulation-banner {
+  border: 2px solid currentcolor;
+  border-radius: 0.35rem;
+  padding: 0.6rem 0.8rem;
+  margin: 0.75rem 0;
+  font-size: 1.05rem;
+  max-width: 44rem;
+}
+
+/* --- Simulator (M13): ergänzendes SVG-Diagramm + Formular-Beitragszeilen --- */
+
+.sim-chart {
+  max-width: 44rem;
+  margin: 0.75rem 0;
+}
+
+.sim-chart svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 0.35rem;
+}
+
+/* Sichtbare Legende (Farbe UND Strichmuster – Farbe nie einziges Signal). */
+.sim-chart-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.sim-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Beitragszeile im Simulations-Formular (Label/Betrag/Zuflussart/Ziel + Entfernen). */
+.sim-contribution-row {
+  border: 1px dashed rgba(128, 128, 128, 0.45);
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.sim-compare-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+/* --- Sparpläne (M10): Filterleiste mit sichtbarem Aktiv-Zustand --- */
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.filter-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filter-button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid rgba(128, 128, 128, 0.6);
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+}
+
+/* Aktiver Filter: Häkchen im Text (Symbol) PLUS Rahmen/Schriftstärke – nie nur Farbe. */
+.filter-button[aria-pressed='true'] {
+  font-weight: 700;
+  border-width: 2px;
+  border-color: currentcolor;
+  background: rgba(128, 128, 128, 0.14);
+}
+
+/* --- Schmale Viewports: Navigation einklappbar über dem Inhalt --- */
+
+@media (max-width: 45rem) {
+  .app-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-body {
+    flex-direction: column;
+  }
+
+  .app-nav {
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.45);
+    padding: 0.65rem 1rem;
+  }
+
+  .nav-toggle {
+    display: inline-block;
+  }
+
+  .nav-container {
+    display: none;
+  }
+
+  .nav-container.nav-open {
+    display: block;
+    margin-top: 0.5rem;
+  }
+
+  .app-main {
+    padding: 1rem 1rem 2.5rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* B8 (M14): Formular-Aktionen auf schmalen Screens stapeln. */
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

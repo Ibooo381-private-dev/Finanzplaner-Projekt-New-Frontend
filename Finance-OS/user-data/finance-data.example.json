@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "appName": "Finance OS",
+    "createdAt": "2026-07-19T00:00:00.000Z",
+    "updatedAt": "2026-07-19T00:00:00.000Z",
+    "currency": "EUR",
+    "isExampleData": true,
+    "description": "Beispiel-/Startvorlage. Enthält ausschließlich die in docs/investment-source-map.md Version 3 (U1/U2) bestätigten Werte; Start-Snapshot vom 2026-07-17. Unbekannte Werte sind null bzw. leere Historien - keine Werte erfunden."
+  },
+  "settings": {
+    "emergencyFund": {
+      "factor": 4,
+      "netIncomeMonthly": 1170,
+      "manualOverrideAmount": null
+    },
+    "monthlySavingsBudget": null,
+    "backup": {
+      "mode": "everySave",
+      "retentionCount": 10
+    },
+    "display": {
+      "numberLocale": "de-DE",
+      "percentDecimals": 2
+    },
+    "activeTargetProfileId": "tp-student-sparplan"
+  },
+  "accounts": [
+    {
+      "id": "acc-sparkasse-giro",
+      "name": "Girokonto Sparkasse",
+      "institution": "Sparkasse",
+      "type": "giro",
+      "earmark": null,
+      "countsAsFreeLiquidity": true,
+      "allowNegativeBalance": true,
+      "balanceHistory": [],
+      "note": "Gehaltseingang, Abos/Fixkosten; Saldo unbekannt (nichts erfunden)"
+    },
+    {
+      "id": "acc-ing-ruecklage",
+      "name": "ING Ruecklagenkonto Shares2you",
+      "institution": "ING",
+      "type": "ruecklage",
+      "earmark": "shares2you",
+      "countsAsFreeLiquidity": false,
+      "balanceHistory": [],
+      "note": "Ausschliesslich Shares2you-Ruecklage; 75 EUR/Monat Ruecklagenuebertragung; zaehlt nie zur frei verfuegbaren Liquiditaet"
+    },
+    {
+      "id": "acc-vw-tagesgeld",
+      "name": "Volkswagen Bank Tagesgeld",
+      "institution": "Volkswagen Bank",
+      "type": "tagesgeld",
+      "earmark": null,
+      "countsAsFreeLiquidity": false,
+      "balanceHistory": [
+        { "date": "2026-07-17", "amount": 627.59 }
+      ],
+      "note": "Notgroschen-Konto; 25 EUR/Monat Sparrate"
+    },
+    {
+      "id": "acc-tr-cash",
+      "name": "Trade Republic Cash",
+      "institution": "Trade Republic",
+      "type": "cash",
+      "earmark": null,
+      "countsAsFreeLiquidity": true,
+      "balanceHistory": [],
+      "note": "TR-Ausgabenkonto; zaehlt nie als Depotvermoegen; Saldo unbekannt"
+    },
+    {
+      "id": "acc-tr-depot",
+      "name": "Trade Republic Depot",
+      "institution": "Trade Republic",
+      "type": "depot",
+      "balanceHistory": [],
+      "note": "Depotwert wird aus den Positionen berechnet, keine eigene Saldo-Historie"
+    },
+    {
+      "id": "acc-fnz-vl-depot",
+      "name": "FNZ VL-Depot",
+      "institution": "FNZ Bank",
+      "type": "depot",
+      "balanceHistory": [],
+      "note": "VL-Depot (40 EUR/Monat: 33,50 eigen + 6,50 Arbeitgeber)"
+    },
+    {
+      "id": "acc-equatex-depot",
+      "name": "Equatex Telekom-Aktien",
+      "institution": "Equatex",
+      "type": "depot",
+      "balanceHistory": [],
+      "note": "Jaehrliche Shares2you-Einzahlung"
+    },
+    {
+      "id": "acc-bitget-krypto",
+      "name": "Bitget Krypto",
+      "institution": "Bitget",
+      "type": "krypto",
+      "countsAsFreeLiquidity": false,
+      "includeInInvestedWealth": false,
+      "balanceHistory": [],
+      "needsReview": true,
+      "note": "Bestand und Aufnahme ins Anlagevermoegen zurueckgestellt (U1)"
+    },
+    {
+      "id": "acc-telekom-pension",
+      "name": "Telekom Pensionsfonds",
+      "institution": "Deutsche Telekom",
+      "type": "pension",
+      "balanceHistory": [],
+      "needsReview": true,
+      "note": "Merkposten ohne Wert; Behandlung zurueckgestellt; zaehlt in keine Kennzahl"
+    }
+  ],
+  "portfolioPositions": [
+    {
+      "id": "pos-vl-ishares-world",
+      "name": "VL iShares Core MSCI World",
+      "isin": "IE00B4L5Y983",
+      "accountId": "acc-fnz-vl-depot",
+      "assetClass": "etf",
+      "group": "world",
+      "isVL": true,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 577.99 }
+      ]
+    },
+    {
+      "id": "pos-spdr-world-acc",
+      "name": "SPDR MSCI World thesaurierend",
+      "isin": "IE00BFY0GT14",
+      "accountId": "acc-tr-depot",
+      "assetClass": "etf",
+      "group": "world",
+      "isVL": false,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 237.45 }
+      ]
+    },
+    {
+      "id": "pos-xtrackers-world-dist",
+      "name": "Xtrackers MSCI World ausschuettend",
+      "isin": "IE00BK1PV551",
+      "accountId": "acc-tr-depot",
+      "assetClass": "etf",
+      "group": "world",
+      "isVL": false,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 204.86 }
+      ]
+    },
+    {
+      "id": "pos-ishares-em-imi",
+      "name": "iShares MSCI EM IMI",
+      "isin": "IE00BKM4GZ66",
+      "accountId": "acc-tr-depot",
+      "assetClass": "etf",
+      "group": "em",
+      "isVL": false,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 99.11 }
+      ]
+    },
+    {
+      "id": "pos-ishares-gold-etc",
+      "name": "iShares Physical Gold ETC",
+      "isin": "IE00B4ND3602",
+      "accountId": "acc-tr-depot",
+      "assetClass": "etc",
+      "group": "gold",
+      "isVL": false,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 33.92 }
+      ]
+    },
+    {
+      "id": "pos-telekom-aktien",
+      "name": "Deutsche Telekom Aktien",
+      "isin": null,
+      "accountId": "acc-equatex-depot",
+      "assetClass": "stock",
+      "group": "telekom",
+      "isVL": false,
+      "valueHistory": [
+        { "date": "2026-07-17", "value": 1369.14 }
+      ],
+      "note": "ISIN in den Quellen nicht bestaetigt, daher null (nichts erfinden)"
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "snap-2026-07-17",
+      "date": "2026-07-17",
+      "label": "Start-Snapshot (Source Map Version 3)",
+      "locked": true,
+      "source": "seed"
+    }
+  ],
+  "savingsPlans": [
+    {
+      "id": "sp-vl-own",
+      "name": "VL Eigenanteil",
+      "targetKind": "position",
+      "targetId": "pos-vl-ishares-world",
+      "amount": 33.5,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": false,
+      "minAmount": 33.5,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "VL-Vertrag insgesamt fix 40 EUR/Monat"
+    },
+    {
+      "id": "sp-vl-employer",
+      "name": "VL Arbeitgeberzuschuss Telekom",
+      "targetKind": "position",
+      "targetId": "pos-vl-ishares-world",
+      "amount": 6.5,
+      "interval": "monthly",
+      "flowType": "employer",
+      "isFlexible": false,
+      "minAmount": 6.5,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Arbeitgeberleistung, nicht umlenkbar"
+    },
+    {
+      "id": "sp-tr-spdr",
+      "name": "TR Sparplan SPDR World",
+      "targetKind": "position",
+      "targetId": "pos-spdr-world-acc",
+      "amount": 23,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": null
+    },
+    {
+      "id": "sp-tr-xtrackers",
+      "name": "TR Sparplan Xtrackers World",
+      "targetKind": "position",
+      "targetId": "pos-xtrackers-world-dist",
+      "amount": 22,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": null
+    },
+    {
+      "id": "sp-tr-em-imi",
+      "name": "TR Sparplan EM IMI",
+      "targetKind": "position",
+      "targetId": "pos-ishares-em-imi",
+      "amount": 10,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": null
+    },
+    {
+      "id": "sp-tr-gold",
+      "name": "TR Sparplan Physical Gold",
+      "targetKind": "position",
+      "targetId": "pos-ishares-gold-etc",
+      "amount": 5,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Fester Eigenbeitrag; variable Zufluesse siehe sp-tr-saveback und sp-tr-roundup"
+    },
+    {
+      "id": "sp-vw-tagesgeld",
+      "name": "Tagesgeld-Sparrate VW Bank",
+      "targetKind": "account",
+      "targetId": "acc-vw-tagesgeld",
+      "amount": 25,
+      "interval": "monthly",
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": null
+    },
+    {
+      "id": "sp-ing-ruecklage",
+      "name": "Ruecklagenuebertragung ING Shares2you",
+      "targetKind": "account",
+      "targetId": "acc-ing-ruecklage",
+      "amount": 75,
+      "interval": "monthly",
+      "flowType": "reserve_transfer",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Umbuchung, keine Sparleistung; dieselben Gelder wie die jaehrliche Equatex-Einzahlung (keine Doppelzaehlung)"
+    },
+    {
+      "id": "sp-telekom-eigen",
+      "name": "Telekom Eigenbeitrag (Equatex)",
+      "targetKind": "position",
+      "targetId": "pos-telekom-aktien",
+      "amount": 1000,
+      "interval": "yearly",
+      "dueMonth": 7,
+      "flowType": "own_fixed",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Real 1x jaehrlich im Juli (900 aus ING-Ruecklage + 100 Sparergaenzung); der geglaettete Monatswert wird immer berechnet, nie gespeichert"
+    },
+    {
+      "id": "sp-telekom-bonus",
+      "name": "Telekom Shares2you-Bonus",
+      "targetKind": "position",
+      "targetId": "pos-telekom-aktien",
+      "amount": 500,
+      "interval": "yearly",
+      "dueMonth": 7,
+      "flowType": "employer",
+      "isFlexible": false,
+      "minAmount": 500,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Arbeitgeberleistung, nicht umlenkbar; der geglaettete Monatswert wird berechnet, nie gespeichert"
+    },
+    {
+      "id": "sp-tr-saveback",
+      "name": "TR Saveback in Gold",
+      "targetKind": "position",
+      "targetId": "pos-ishares-gold-etc",
+      "amount": null,
+      "interval": "monthly",
+      "flowType": "provider",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Variabel, nicht garantiert; zusammen mit Round-up typisch ca. 10-15 EUR/Monat; Ist-Werte als transactions"
+    },
+    {
+      "id": "sp-tr-roundup",
+      "name": "TR Round-up in Gold",
+      "targetKind": "position",
+      "targetId": "pos-ishares-gold-etc",
+      "amount": null,
+      "interval": "monthly",
+      "flowType": "own_variable",
+      "isFlexible": true,
+      "minAmount": null,
+      "validFrom": "2026-07-19",
+      "validUntil": null,
+      "note": "Eigenes Geld, variabel; immer getrennt von Saveback; Ist-Werte als transactions"
+    }
+  ],
+  "targetProfiles": [
+    {
+      "id": "tp-student-sparplan",
+      "name": "Student - tatsaechlicher Sparplan (Ebene A)",
+      "kind": "student-sparplan",
+      "basis": "savingsRate",
+      "level1": null,
+      "weights": null,
+      "note": "Referenz sind die aktiven savingsPlans; Gewichte werden daraus berechnet, nicht gespeichert"
+    },
+    {
+      "id": "tp-student-bestand",
+      "name": "Student - Bestandsziel (Ebene B)",
+      "kind": "student-bestand",
+      "basis": "holdings",
+      "level1": null,
+      "weights": null,
+      "note": "Bewusst offen, nutzereditierbar (U1); leeres Profil rechnet nicht"
+    },
+    {
+      "id": "tp-job",
+      "name": "Job-Profil",
+      "kind": "job",
+      "basis": "holdings",
+      "level1": {
+        "depotShare": 0.85,
+        "cashShare": 0.15
+      },
+      "weights": [
+        { "refKind": "position", "ref": "pos-vl-ishares-world", "weight": 0.048 },
+        { "refKind": "position", "ref": "pos-xtrackers-world-dist", "weight": 0.31 },
+        { "refKind": "position", "ref": "pos-spdr-world-acc", "weight": 0.342 },
+        { "refKind": "position", "ref": "pos-ishares-em-imi", "weight": 0.15 },
+        { "refKind": "position", "ref": "pos-ishares-gold-etc", "weight": 0.05 },
+        { "refKind": "position", "ref": "pos-telekom-aktien", "weight": 0.1 }
+      ],
+      "note": "Prozentwerte normativ (U1); World gesamt 0.70 wird berechnet; Aktivierung nur manuell mit Bestaetigung, sinnvoll erst nach 2027-09-30"
+    },
+    {
+      "id": "tp-custom",
+      "name": "Eigene Aufteilung",
+      "kind": "custom",
+      "basis": "holdings",
+      "level1": null,
+      "weights": null,
+      "note": "Leer, frei editierbar (U1)"
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-notgroschen",
+      "name": "Notgroschen",
+      "targetAmount": null,
+      "targetDate": null,
+      "metric": "tagesgeld",
+      "isAutoCalculated": true,
+      "status": "active",
+      "note": "Ziel = factor x netIncomeMonthly (Standard 4 x 1.170 = 4.680); manuelle Uebersteuerung ueber settings.emergencyFund.manualOverrideAmount"
+    },
+    {
+      "id": "goal-depot-10k",
+      "name": "10.000 EUR Depot",
+      "targetAmount": 10000,
+      "targetDate": null,
+      "metric": "depotValue",
+      "isAutoCalculated": false,
+      "status": "active",
+      "note": null
+    },
+    {
+      "id": "goal-vermoegen-50k",
+      "name": "50.000 EUR Gesamtvermoegen",
+      "targetAmount": 50000,
+      "targetDate": null,
+      "metric": "totalWealth",
+      "isAutoCalculated": false,
+      "status": "active",
+      "note": null
+    },
+    {
+      "id": "goal-physisches-gold",
+      "name": "Physisches Gold",
+      "targetAmount": null,
+      "targetDate": null,
+      "metric": null,
+      "isAutoCalculated": false,
+      "status": "active",
+      "note": "Schwelle offen; Umwandlung ETC in physisches Gold nur als Ziel/Erinnerung, nie automatisch"
+    },
+    {
+      "id": "goal-auto-ruecklage",
+      "name": "Auto-Ruecklage",
+      "targetAmount": null,
+      "targetDate": null,
+      "metric": null,
+      "isAutoCalculated": false,
+      "status": "deferred",
+      "note": "Betrag und Termin offen, nutzerdefinierbar"
+    },
+    {
+      "id": "goal-urlaub",
+      "name": "Urlaub",
+      "targetAmount": null,
+      "targetDate": null,
+      "metric": null,
+      "isAutoCalculated": false,
+      "status": "deferred",
+      "note": "Betrag und Termin offen, nutzerdefinierbar"
+    },
+    {
+      "id": "goal-berufseinstieg",
+      "name": "Berufseinstieg",
+      "targetAmount": null,
+      "targetDate": null,
+      "metric": null,
+      "isAutoCalculated": false,
+      "status": "active",
+      "note": "Nach Studienende 2027-09-30; genauer Zeitpunkt offen"
+    },
+    {
+      "id": "goal-sparrate-1000",
+      "name": "Monatlich 1.000 EUR Sparrate",
+      "targetAmount": 1000,
+      "targetDate": null,
+      "metric": "monthlySavingsRate",
+      "isAutoCalculated": false,
+      "status": "active",
+      "note": null
+    }
+  ],
+  "transactions": [],
+  "plannedChanges": [],
+  "simulations": [],
+  "fixedCosts": [],
+  "monthlyClosings": [],
+  "journalEntries": [],
+  "importHistory": []
+}

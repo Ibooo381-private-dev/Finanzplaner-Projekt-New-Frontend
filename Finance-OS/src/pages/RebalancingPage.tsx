@@ -3,7 +3,7 @@
  * Profilauswahl (ändert NIE das aktive Zielprofil, G5), Abweichungstabelle,
  * Empfehlungen in Konjunktiv-Formulierung, sparratenbasierter Vorschlag
  * (F17/F18 mit abgeleitetem A1-Budget), hypothetische Voll-Simulation (reine
- * Anzeige, A7) und gespeicherte Planungen (G5, „geplant, nicht ausgeführt“).
+ * Anzeige, A7) und vorgemerkte Planungen (G5, „geplant, nicht ausgeführt“).
  *
  * REIN lesend bis auf addPlannedChange/discardPlannedChange (G5: nur nach
  * window.confirm inkl. Beträgen; Vergleich vor applyDataChange; Abbruch lässt
@@ -46,6 +46,7 @@ import { isPositionActive } from '../data/positions'
 import { addPlannedChange, discardPlannedChange } from '../data/plannedChanges'
 import type { PlannedChangeActionResult, PlannedChangeItemInput } from '../data/plannedChanges'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
 
 // --- Deutsche Labels (UI) ---
 
@@ -90,6 +91,18 @@ const PLANNED_STATUS_SYMBOLS: Record<'planned' | 'discarded', string> = {
   discarded: '■',
 }
 
+/** Plaketten-Klasse je Status (Farbe nur ergänzend – Text + Symbol tragen die Bedeutung). */
+const ACTION_LEVEL_BADGES: Record<ActionLevel, string> = {
+  none: 'badge badge--ok',
+  recommendation: 'badge badge--warn',
+  'recommendation-with-sale-option': 'badge badge--danger',
+}
+
+const PLANNED_STATUS_BADGES: Record<'planned' | 'discarded', string> = {
+  planned: 'badge badge--info',
+  discarded: 'badge',
+}
+
 /** Prozent-Anzeige aus Dezimalanteil (F19: percentDecimals, Standard 2). */
 function formatShare(decimal: number, decimals: number): string {
   const format = new Intl.NumberFormat('de-DE', {
@@ -115,20 +128,6 @@ function entryLabel(entry: { refKind: 'position' | 'group'; ref: string; name: s
     return `${GROUP_LABELS[entry.ref as PositionGroup]} (Gruppe)`
   }
   return entry.name ?? 'unbekannte Depotposition'
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
-  )
 }
 
 function RebalancingRules() {
@@ -219,7 +218,7 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
   // Lokale Profilauswahl (G5): '' = noch keine Auswahl → aktives Profil.
   const [selectedProfileId, setSelectedProfileId] = useState('')
   // Aktions-Feedback erscheint BEIM Auslöser (A11y-Befund M11-B2):
-  // Speichern-Feedback in Sektion D, Verwerfen-Feedback in Sektion F.
+  // Vormerken-Feedback in Sektion D, Verwerfen-Feedback in Sektion F.
   const [actionError, setActionError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null)
   const [discardFeedback, setDiscardFeedback] = useState<
@@ -331,7 +330,7 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
     const total = items.reduce((sum, item) => sum + item.plannedMonthlyAmount, 0)
     // G5: ausdrückliche Bestätigung INKLUSIVE der Beträge; Abbruch ändert nichts.
     const proceed = window.confirm(
-      `Sparraten-Vorschlag als geplante Einstellung speichern?\n\nGeplante Monatsraten (Profil „${selectedProfile.name}“):\n${lines.join('\n')}\nSumme: ${formatEuro(total)} pro Monat.\n\nDie Planung wird nur innerhalb von Finance OS gespeichert („geplant, nicht ausgeführt“) und ändert nie Ist-Daten, Sparpläne oder Broker-Einstellungen.`,
+      `Sparraten-Vorschlag als geplante Einstellung vormerken?\n\nGeplante Monatsraten (Profil „${selectedProfile.name}“):\n${lines.join('\n')}\nSumme: ${formatEuro(total)} pro Monat.\n\nDie Planung wird nur innerhalb von Finance OS vorgemerkt („geplant, nicht ausgeführt“) und ändert nie Ist-Daten, Sparpläne oder Broker-Einstellungen.`,
     )
     if (!proceed) return
     const error = applyResult(
@@ -350,7 +349,7 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
       return
     }
     setSaveSuccess(
-      'Die Planung wurde gespeichert und ist als „geplant, nicht ausgeführt“ gekennzeichnet. Sie ändert keine Ist-Daten und keine Sparpläne.',
+      'Die Planung wurde vorgemerkt und ist als „geplant, nicht ausgeführt“ gekennzeichnet. Sie ändert keine Ist-Daten und keine Sparpläne. In deine Datei gelangt sie erst über die Speichern-Schaltfläche oben.',
     )
   }
 
@@ -545,14 +544,14 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                 <thead>
                   <tr>
                     <th scope="col">Position/Gruppe</th>
-                    <th scope="col">Ist (€)</th>
-                    <th scope="col">Ist (%)</th>
-                    <th scope="col">Soll (%)</th>
-                    <th scope="col">Soll (€)</th>
-                    <th scope="col">Abweichung (Pp)</th>
-                    <th scope="col">Abweichung (€)</th>
-                    <th scope="col">Kaufbedarf</th>
-                    <th scope="col">Verkaufsbedarf</th>
+                    <th scope="col" className="num">Ist (€)</th>
+                    <th scope="col" className="num">Ist (%)</th>
+                    <th scope="col" className="num">Soll (%)</th>
+                    <th scope="col" className="num">Soll (€)</th>
+                    <th scope="col" className="num">Abweichung (Pp)</th>
+                    <th scope="col" className="num">Abweichung (€)</th>
+                    <th scope="col" className="num">Kaufbedarf</th>
+                    <th scope="col" className="num">Verkaufsbedarf</th>
                     <th scope="col">Handlungsebene</th>
                   </tr>
                 </thead>
@@ -560,20 +559,22 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                   {sortedEntries.map((entry) => (
                     <tr key={`${entry.refKind}-${entry.ref}`}>
                       <th scope="row">{entryLabel(entry)}</th>
-                      <td>{formatEuro(entry.actualValue)}</td>
-                      <td>{formatShare(entry.actualShare, percentDecimals)}</td>
-                      <td>{formatShare(entry.targetShare, percentDecimals)}</td>
-                      <td>{formatEuro(entry.targetValue)}</td>
-                      <td>{formatPp(entry.deviationPp, percentDecimals)}</td>
-                      <td>
+                      <td className="num">{formatEuro(entry.actualValue)}</td>
+                      <td className="num">{formatShare(entry.actualShare, percentDecimals)}</td>
+                      <td className="num">{formatShare(entry.targetShare, percentDecimals)}</td>
+                      <td className="num">{formatEuro(entry.targetValue)}</td>
+                      <td className="num">{formatPp(entry.deviationPp, percentDecimals)}</td>
+                      <td className="num">
                         {entry.deviationEur > 0
                           ? `+${formatEuro(entry.deviationEur)}`
                           : formatEuro(entry.deviationEur)}
                       </td>
-                      <td>{formatEuro(entry.buyRequirement)}</td>
-                      <td>{formatEuro(entry.sellRequirement)}</td>
+                      <td className="num">{formatEuro(entry.buyRequirement)}</td>
+                      <td className="num">{formatEuro(entry.sellRequirement)}</td>
                       <td>
-                        {ACTION_LEVEL_SYMBOLS[entry.level]} {ACTION_LEVEL_LABELS[entry.level]}
+                        <span className={ACTION_LEVEL_BADGES[entry.level]}>
+                          {ACTION_LEVEL_SYMBOLS[entry.level]} {ACTION_LEVEL_LABELS[entry.level]}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -581,32 +582,32 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                 <tfoot>
                   <tr>
                     <th scope="row">Summe</th>
-                    <td>
+                    <td className="num">
                       {formatEuro(
                         sortedEntries.reduce((sum, entry) => sum + entry.actualValue, 0),
                       )}
                     </td>
-                    <td>
+                    <td className="num">
                       {formatShare(
                         sortedEntries.reduce((sum, entry) => sum + entry.actualShare, 0),
                         percentDecimals,
                       )}
                     </td>
-                    <td>
+                    <td className="num">
                       {formatShare(
                         sortedEntries.reduce((sum, entry) => sum + entry.targetShare, 0),
                         percentDecimals,
                       )}
                     </td>
-                    <td>
+                    <td className="num">
                       {formatEuro(
                         sortedEntries.reduce((sum, entry) => sum + entry.targetValue, 0),
                       )}
                     </td>
-                    <td>–</td>
-                    <td>–</td>
-                    <td>{formatEuro(analysis.totalBuy)}</td>
-                    <td>{formatEuro(analysis.totalSell)}</td>
+                    <td className="num">–</td>
+                    <td className="num">–</td>
+                    <td className="num">{formatEuro(analysis.totalBuy)}</td>
+                    <td className="num">{formatEuro(analysis.totalSell)}</td>
                     <td>–</td>
                   </tr>
                 </tfoot>
@@ -740,8 +741,8 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                     <thead>
                       <tr>
                         <th scope="col">Sparplan</th>
-                        <th scope="col">Aktuelle Rate</th>
-                        <th scope="col">Vorgeschlagene Rate</th>
+                        <th scope="col" className="num">Aktuelle Rate</th>
+                        <th scope="col" className="num">Vorgeschlagene Rate</th>
                         <th scope="col">Begründung</th>
                       </tr>
                     </thead>
@@ -751,12 +752,12 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                         return (
                           <tr key={proposal.id}>
                             <th scope="row">{plan?.name ?? 'unbekannter Sparplan'}</th>
-                            <td>
+                            <td className="num">
                               {plan && typeof plan.amount === 'number'
                                 ? formatEuro(plan.amount)
                                 : 'unbekannt'}
                             </td>
-                            <td>{formatEuro(proposal.proposedMonthlyAmount)}</td>
+                            <td className="num">{formatEuro(proposal.proposedMonthlyAmount)}</td>
                             <td>{REASON_LABELS[proposal.reason]}</td>
                           </tr>
                         )
@@ -838,10 +839,11 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                   <div className="toolbar">
                     <button
                       type="button"
+                      className="btn-primary"
                       onClick={handleSavePlannedChange}
                       disabled={state.isSaving}
                     >
-                      Als geplante Einstellung speichern
+                      Als geplante Einstellung vormerken
                     </button>
                   </div>
                 ) : (
@@ -886,30 +888,30 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                     <thead>
                       <tr>
                         <th scope="col">Position/Gruppe</th>
-                        <th scope="col">Hypothetischer Kauf</th>
-                        <th scope="col">Hypothetischer Verkauf</th>
-                        <th scope="col">Neuer Wert</th>
-                        <th scope="col">Neue Verteilung (= Ziel)</th>
+                        <th scope="col" className="num">Hypothetischer Kauf</th>
+                        <th scope="col" className="num">Hypothetischer Verkauf</th>
+                        <th scope="col" className="num">Neuer Wert</th>
+                        <th scope="col" className="num">Neue Verteilung (= Ziel)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {simulation.entries.map((entry) => (
                         <tr key={`sim-${entry.refKind}-${entry.ref}`}>
                           <th scope="row">{entryLabel(entry)}</th>
-                          <td>{formatEuro(entry.buyAmount)}</td>
-                          <td>{formatEuro(entry.sellAmount)}</td>
-                          <td>{formatEuro(entry.newValue)}</td>
-                          <td>{formatShare(entry.newShare, percentDecimals)}</td>
+                          <td className="num">{formatEuro(entry.buyAmount)}</td>
+                          <td className="num">{formatEuro(entry.sellAmount)}</td>
+                          <td className="num">{formatEuro(entry.newValue)}</td>
+                          <td className="num">{formatShare(entry.newShare, percentDecimals)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr>
                         <th scope="row">Summe</th>
-                        <td>{formatEuro(simulation.totalBuy)}</td>
-                        <td>{formatEuro(simulation.totalSell)}</td>
-                        <td>{formatEuro(analysis.depotValue)}</td>
-                        <td>
+                        <td className="num">{formatEuro(simulation.totalBuy)}</td>
+                        <td className="num">{formatEuro(simulation.totalSell)}</td>
+                        <td className="num">{formatEuro(analysis.depotValue)}</td>
+                        <td className="num">
                           {formatShare(
                             simulation.entries.reduce((sum, entry) => sum + entry.newShare, 0),
                             percentDecimals,
@@ -935,11 +937,11 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
         </>
       ) : null}
 
-      {/* --- F: Gespeicherte Planungen --- */}
+      {/* --- F: Vorgemerkte Planungen --- */}
       <section aria-labelledby="rebalancing-planned-title">
-        <h3 id="rebalancing-planned-title">Gespeicherte Planungen</h3>
+        <h3 id="rebalancing-planned-title">Vorgemerkte Planungen</h3>
         <p className="app-hint">
-          Gespeicherte Planungen sind reine Absichten innerhalb von Finance OS („geplant, nicht
+          Vorgemerkte Planungen sind reine Absichten innerhalb von Finance OS („geplant, nicht
           ausgeführt“) – sie ändern nie Ist-Daten, Sparpläne oder Broker-Einstellungen. Verworfene
           Planungen bleiben zur Historie erhalten (kein Löschen).
         </p>
@@ -956,8 +958,8 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
         ) : null}
         {data.plannedChanges.length === 0 ? (
           <p className="app-hint">
-            Noch keine gespeicherten Planungen. Ein Vorschlag kann oben nach ausdrücklicher
-            Bestätigung gespeichert werden.
+            Noch keine vorgemerkten Planungen. Ein Sparraten-Vorschlag kann oben mit „Als geplante
+            Einstellung vormerken“ nach ausdrücklicher Bestätigung vorgemerkt werden.
           </p>
         ) : (
           <ul className="goal-list">
@@ -968,7 +970,10 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                   <p className="goal-heading">
                     <strong>Planung vom {formatPlannedDate(change.createdAt)}</strong> – Profil „
                     {profileNameById.get(change.basedOnProfileId) ?? 'unbekanntes Profil'}“ –
-                    Status: {PLANNED_STATUS_SYMBOLS[status]} {PLANNED_STATUS_LABELS[status]}
+                    Status:{' '}
+                    <span className={PLANNED_STATUS_BADGES[status]}>
+                      {PLANNED_STATUS_SYMBOLS[status]} {PLANNED_STATUS_LABELS[status]}
+                    </span>
                   </p>
                   <ul>
                     {change.items.map((item, index) => (
@@ -985,6 +990,7 @@ export function RebalancingPage({ onOpenDataBackups }: { onOpenDataBackups: () =
                     {status === 'planned' ? (
                       <button
                         type="button"
+                        className="btn-danger"
                         aria-label={`Planung vom ${formatPlannedDate(change.createdAt)} verwerfen`}
                         onClick={() => handleDiscard(change.id)}
                         disabled={state.isSaving}

@@ -51,6 +51,8 @@ import {
 import type { PositionActionResult } from '../data/positions'
 import { captureSnapshot, isBackdatedBeforeLatestSnapshot } from '../data/snapshot'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
+import { Icon } from '../components/Icon'
 
 // --- Deutsche Labels (UI) ---
 
@@ -71,6 +73,12 @@ const ACTION_LEVEL_LABELS: Record<ActionLevel, string> = {
   none: '–',
   recommendation: 'Empfehlung',
   'recommendation-with-sale-option': 'Empfehlung inkl. Verkaufsoption',
+}
+
+/** Plaketten-Variante je Handlungsstufe (Text bleibt das Signal, Farbe nur Zusatz). */
+const ACTION_LEVEL_BADGES: Record<Exclude<ActionLevel, 'none'>, string> = {
+  recommendation: 'badge--info',
+  'recommendation-with-sale-option': 'badge--warn',
 }
 
 function isAccountActive(account: Account): boolean {
@@ -153,6 +161,7 @@ interface PositionFormValues {
 
 function PositionForm({
   heading,
+  submitLabel,
   initial,
   groupEditable,
   depotAccounts,
@@ -162,6 +171,8 @@ function PositionForm({
   onSubmit,
 }: {
   heading: string
+  /** Beschriftung des Absende-Buttons („Position anlegen“ bzw. „Änderungen übernehmen“). */
+  submitLabel: string
   initial: PositionFormValues
   /** Nur beim Hinzufügen wählbar; beim Bearbeiten ist die Gruppe read-only mit Begründung. */
   groupEditable: boolean
@@ -301,7 +312,7 @@ function PositionForm({
         {duplicate !== null ? (
           <p id="position-isin-warning" className="field-warning" role="status">
             {isPositionActive(duplicate)
-              ? `⚠ Im gewählten Depotkonto existiert bereits eine Position mit dieser ISIN („${duplicate.name}“). Das Speichern bleibt möglich – prüfe, ob wirklich eine zweite Position gewünscht ist.`
+              ? `⚠ Im gewählten Depotkonto existiert bereits eine Position mit dieser ISIN („${duplicate.name}“). Du kannst trotzdem mit „${submitLabel}“ fortfahren – prüfe, ob wirklich eine zweite Position gewünscht ist.`
               : `⚠ Eine inaktive Position mit gleicher ISIN existiert („${duplicate.name}“) – Reaktivieren statt Neuanlage prüfen.`}
           </p>
         ) : null}
@@ -321,7 +332,7 @@ function PositionForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">{submitLabel}</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -424,7 +435,7 @@ function ValueForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">Wert übernehmen</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -517,7 +528,7 @@ function SnapshotForm({
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     setError(null)
-    // Vollständigkeitsprüfung VOR dem Speichern: fehlende Namen im Fehlertext,
+    // Vollständigkeitsprüfung VOR dem Übernehmen: fehlende Namen im Fehlertext,
     // fehlende Werte werden NIE stillschweigend als 0 erfasst.
     const missing: { id: string; name: string }[] = []
     const invalid: { id: string; name: string }[] = []
@@ -562,9 +573,9 @@ function SnapshotForm({
       <h3>Snapshot erfassen</h3>
       <p className="app-hint">
         Ein Snapshot erfasst alle aktiven Depotpositionen und alle aktiven Tagesgeldkonten zum
-        gewählten Datum vollständig. Die Feldliste unten ist zugleich die Vorschau: gespeichert wird
-        genau das, was hier steht. Nach dem Speichern ist das Datum dauerhaft gesperrt; Korrekturen
-        nur als neuer Snapshot mit neuem Datum.
+        gewählten Datum vollständig. Die Feldliste unten ist zugleich die Vorschau: übernommen wird
+        genau das, was hier steht. Nach „Snapshot übernehmen“ ist das Datum dauerhaft gesperrt;
+        Korrekturen nur als neuer Snapshot mit neuem Datum.
       </p>
       <div className="form-field">
         <label htmlFor="snapshot-date">Datum *</label>
@@ -581,7 +592,7 @@ function SnapshotForm({
         {isBackdatedBeforeLatestSnapshot(data, dateIso) ? (
           // A11y (Review-Befund B7): Hinweis vor den Aktions-Buttons und am Datumsfeld verankert.
           <p id="snapshot-backdated-hint" className="app-hint" role="status">
-            ℹ Das gewählte Datum liegt vor dem jüngsten Snapshot – beim Speichern wird eine
+            ℹ Das gewählte Datum liegt vor dem jüngsten Snapshot – beim Übernehmen wird eine
             Bestätigung abgefragt (rückdatierte Erfassung).
           </p>
         ) : null}
@@ -652,7 +663,7 @@ function SnapshotForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Snapshot speichern</button>
+        <button type="submit">Snapshot übernehmen</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -743,13 +754,13 @@ function TargetComparison({
             <thead>
               <tr>
                 <th scope="col">Ziel</th>
-                <th scope="col">Ziel-%</th>
-                <th scope="col">Ist-Wert</th>
-                <th scope="col">Ist-%</th>
-                <th scope="col">Abweichung (Pp)</th>
-                <th scope="col">Kaufbedarf</th>
+                <th scope="col" className="num">Ziel-%</th>
+                <th scope="col" className="num">Ist-Wert</th>
+                <th scope="col" className="num">Ist-%</th>
+                <th scope="col" className="num">Abweichung (Pp)</th>
+                <th scope="col" className="num">Kaufbedarf</th>
                 <th scope="col">Handlungsstufe</th>
-                <th scope="col">Verkaufsbedarf</th>
+                <th scope="col" className="num">Verkaufsbedarf</th>
               </tr>
             </thead>
             <tbody>
@@ -794,17 +805,25 @@ function TargetComparison({
                 return (
                   <tr key={`${target.refKind}-${target.ref}`}>
                     <th scope="row">{label}</th>
-                    <td>{formatShare(target.weight, percentDecimals)}</td>
-                    <td>{actualText}</td>
-                    <td>
+                    <td className="num">{formatShare(target.weight, percentDecimals)}</td>
+                    <td className="num">{actualText}</td>
+                    <td className="num">
                       {actualShare === null
                         ? '–'
                         : formatShare(actualShare, percentDecimals)}
                     </td>
-                    <td>{pp === null ? '–' : formatPp(pp, percentDecimals)}</td>
-                    <td>{buy === null ? '–' : formatEuro(buy)}</td>
-                    <td>{level === null ? '–' : ACTION_LEVEL_LABELS[level]}</td>
-                    <td>{sell === null ? '–' : formatEuro(sell)}</td>
+                    <td className="num">{pp === null ? '–' : formatPp(pp, percentDecimals)}</td>
+                    <td className="num">{buy === null ? '–' : formatEuro(buy)}</td>
+                    <td>
+                      {level === null || level === 'none' ? (
+                        ACTION_LEVEL_LABELS.none
+                      ) : (
+                        <span className={`badge ${ACTION_LEVEL_BADGES[level]}`}>
+                          {ACTION_LEVEL_LABELS[level]}
+                        </span>
+                      )}
+                    </td>
+                    <td className="num">{sell === null ? '–' : formatEuro(sell)}</td>
                   </tr>
                 )
               })}
@@ -831,20 +850,6 @@ type EditorState =
   | { kind: 'edit'; positionId: string }
   | { kind: 'value'; positionId: string }
   | { kind: 'snapshot' }
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
-  )
-}
 
 function DepotRules() {
   return (
@@ -1066,10 +1071,10 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
     positionValues: Map<string, number>,
     accountBalances: Map<string, number>,
   ): string | null {
-    // Rückdatierte Erfassung: Bestätigung VOR dem Speichern (Phase C).
+    // Rückdatierte Erfassung: Bestätigung VOR dem Übernehmen (Phase C).
     if (isBackdatedBeforeLatestSnapshot(loadedData, dateIso)) {
       const proceed = window.confirm(
-        `Das Datum ${formatIsoDateGerman(dateIso)} liegt vor dem jüngsten vorhandenen Snapshot. Trotzdem rückdatiert erfassen? Der Snapshot wird nach dem Speichern dauerhaft gesperrt.`,
+        `Das Datum ${formatIsoDateGerman(dateIso)} liegt vor dem jüngsten vorhandenen Snapshot. Trotzdem rückdatiert erfassen? Der Snapshot wird nach dem Übernehmen dauerhaft gesperrt.`,
       )
       if (!proceed) return null
     }
@@ -1084,7 +1089,7 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
     actions.applyDataChange(result.data)
     closeEditor()
     setSnapshotSuccess(
-      `Snapshot vom ${formatIsoDateGerman(dateIso)} gespeichert und gesperrt. Korrekturen sind nur als neuer Snapshot mit neuem Datum möglich.`,
+      `Snapshot vom ${formatIsoDateGerman(dateIso)} übernommen und gesperrt. Korrekturen sind nur als neuer Snapshot mit neuem Datum möglich. In deine Datei gelangt er erst über die Speichern-Schaltfläche oben.`,
     )
     return null
   }
@@ -1148,6 +1153,83 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
         Der Depotwert wird ausschließlich aus den Positionen berechnet. Depotkonten besitzen keinen
         zusätzlichen Saldo.
       </p>
+
+      <div className="toolbar">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={(event) => openEditor({ kind: 'add' }, event.currentTarget)}
+          disabled={state.isSaving || editor.kind === 'add'}
+        >
+          <Icon name="plus" />
+          Position hinzufügen
+        </button>
+        <button
+          type="button"
+          onClick={(event) => openEditor({ kind: 'snapshot' }, event.currentTarget)}
+          disabled={
+            state.isSaving ||
+            editor.kind === 'snapshot' ||
+            (activePositions.length === 0 && activeCashAccounts.length === 0)
+          }
+        >
+          Snapshot erfassen
+        </button>
+      </div>
+
+      {snapshotSuccess !== null ? (
+        <p className="success-note" role="status">
+          ✓ {snapshotSuccess}
+        </p>
+      ) : null}
+
+      {editor.kind === 'add' ? (
+        <PositionForm
+          heading="Position hinzufügen"
+          submitLabel="Position anlegen"
+          initial={emptyForm}
+          groupEditable={true}
+          depotAccounts={depotAccounts}
+          positions={positions}
+          excludeId={null}
+          onCancel={closeEditor}
+          onSubmit={handleAddSubmit}
+        />
+      ) : null}
+      {editor.kind === 'edit' && editingPosition !== null ? (
+        <PositionForm
+          // key erzwingt eine frische Formularinstanz je Position – sonst „klebt“
+          // der Zustand beim Zielwechsel und schreibt auf die falsche Position.
+          key={editingPosition.id}
+          heading={`Position bearbeiten: ${editingPosition.name}`}
+          submitLabel="Änderungen übernehmen"
+          initial={formValuesFromPosition(editingPosition)}
+          groupEditable={false}
+          depotAccounts={depotAccounts}
+          positions={positions}
+          excludeId={editingPosition.id}
+          onCancel={closeEditor}
+          onSubmit={(values) => handleEditSubmit(editingPosition.id, values)}
+        />
+      ) : null}
+      {editor.kind === 'value' && editingPosition !== null ? (
+        <ValueForm
+          key={editingPosition.id}
+          position={editingPosition}
+          onCancel={closeEditor}
+          onSubmit={(value, dateIso) => handleValueSubmit(editingPosition.id, value, dateIso)}
+        />
+      ) : null}
+      {editor.kind === 'snapshot' ? (
+        <SnapshotForm
+          data={loadedData}
+          activePositions={activePositions}
+          activeCashAccounts={activeCashAccounts}
+          onCancel={closeEditor}
+          onSubmit={handleSnapshotSubmit}
+        />
+      ) : null}
+
       <DepotRules />
 
       {missingValuePositions.length > 0 ? (
@@ -1205,81 +1287,11 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
         </div>
       </dl>
 
-      <div className="toolbar">
-        <button
-          type="button"
-          onClick={(event) => openEditor({ kind: 'add' }, event.currentTarget)}
-          disabled={state.isSaving || editor.kind === 'add'}
-        >
-          Position hinzufügen
-        </button>
-        <button
-          type="button"
-          onClick={(event) => openEditor({ kind: 'snapshot' }, event.currentTarget)}
-          disabled={
-            state.isSaving ||
-            editor.kind === 'snapshot' ||
-            (activePositions.length === 0 && activeCashAccounts.length === 0)
-          }
-        >
-          Snapshot erfassen
-        </button>
-      </div>
-
+      {/* Fehler der Zeilen-Aktionen (Deaktivieren/Aktivieren) direkt über der Positionsliste. */}
       {actionError !== null ? (
         <p className="operation-error" role="alert">
           ⚠ {actionError}
         </p>
-      ) : null}
-      {snapshotSuccess !== null ? (
-        <p className="success-note" role="status">
-          ✓ {snapshotSuccess}
-        </p>
-      ) : null}
-
-      {editor.kind === 'add' ? (
-        <PositionForm
-          heading="Position hinzufügen"
-          initial={emptyForm}
-          groupEditable={true}
-          depotAccounts={depotAccounts}
-          positions={positions}
-          excludeId={null}
-          onCancel={closeEditor}
-          onSubmit={handleAddSubmit}
-        />
-      ) : null}
-      {editor.kind === 'edit' && editingPosition !== null ? (
-        <PositionForm
-          // key erzwingt eine frische Formularinstanz je Position – sonst „klebt“
-          // der Zustand beim Zielwechsel und schreibt auf die falsche Position.
-          key={editingPosition.id}
-          heading={`Position bearbeiten: ${editingPosition.name}`}
-          initial={formValuesFromPosition(editingPosition)}
-          groupEditable={false}
-          depotAccounts={depotAccounts}
-          positions={positions}
-          excludeId={editingPosition.id}
-          onCancel={closeEditor}
-          onSubmit={(values) => handleEditSubmit(editingPosition.id, values)}
-        />
-      ) : null}
-      {editor.kind === 'value' && editingPosition !== null ? (
-        <ValueForm
-          key={editingPosition.id}
-          position={editingPosition}
-          onCancel={closeEditor}
-          onSubmit={(value, dateIso) => handleValueSubmit(editingPosition.id, value, dateIso)}
-        />
-      ) : null}
-      {editor.kind === 'snapshot' ? (
-        <SnapshotForm
-          data={loadedData}
-          activePositions={activePositions}
-          activeCashAccounts={activeCashAccounts}
-          onCancel={closeEditor}
-          onSubmit={handleSnapshotSubmit}
-        />
       ) : null}
 
       {positions.length === 0 ? (
@@ -1303,7 +1315,7 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
                   <th scope="col">Asset-Typ</th>
                   <th scope="col">Depotkonto</th>
                   <th scope="col">ISIN</th>
-                  <th scope="col" aria-sort={ariaSort('value')}>
+                  <th scope="col" className="num" aria-sort={ariaSort('value')}>
                     <button
                       type="button"
                       className="sort-button"
@@ -1313,8 +1325,8 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
                     </button>
                   </th>
                   <th scope="col">Letztes Bewertungsdatum</th>
-                  <th scope="col">Anteil am Depot</th>
-                  <th scope="col">Anteil am Gesamtvermögen</th>
+                  <th scope="col" className="num">Anteil am Depot</th>
+                  <th scope="col" className="num">Anteil am Gesamtvermögen</th>
                   <th scope="col">Status</th>
                   <th scope="col">Aktionen</th>
                 </tr>
@@ -1341,11 +1353,19 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
                             : `${account.name} (inaktives Konto)`}
                       </td>
                       <td>{position.isin ?? '–'}</td>
-                      <td>{entry === null ? 'unbekannt' : formatEuro(entry.value)}</td>
+                      <td className="num">
+                        {entry === null ? 'unbekannt' : formatEuro(entry.value)}
+                      </td>
                       <td>{entry === null ? '–' : formatIsoDateGerman(entry.date)}</td>
-                      <td>{shareOfDepotText(position)}</td>
-                      <td>{shareOfTotalText(position)}</td>
-                      <td>{active ? 'Aktiv' : <strong>Inaktiv</strong>}</td>
+                      <td className="num">{shareOfDepotText(position)}</td>
+                      <td className="num">{shareOfTotalText(position)}</td>
+                      <td>
+                        {active ? (
+                          <span className="badge badge--ok">Aktiv</span>
+                        ) : (
+                          <span className="badge">Inaktiv</span>
+                        )}
+                      </td>
                       <td>
                         <div className="row-actions">
                           <button
@@ -1363,6 +1383,7 @@ export function DepotPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
                           </button>
                           <button
                             type="button"
+                            className={active ? 'btn-danger' : undefined}
                             aria-label={
                               active
                                 ? `Position „${position.name}“ deaktivieren`

@@ -6,7 +6,7 @@
  * Daten werden über den echten Provider geladen (LOAD_SUCCEEDED + loadExample).
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import { FinanceDataProvider } from '../../src/state/FinanceDataProvider'
 import { AppLayout } from '../../src/layout/AppLayout'
@@ -73,11 +73,23 @@ function navButton(label: string): HTMLElement {
 describe('AppLayout – Navigation', () => {
   it('zeigt alle 9 Navigationspunkte in der festgelegten Reihenfolge', () => {
     renderLayout()
-    const list = within(getNav()).getByRole('list')
-    const labels = within(list)
-      .getAllByRole('button')
-      .map((button) => (button.textContent ?? '').replace('▸', '').trim())
+    const labels = within(getNav())
+      .getAllByRole('list')
+      .flatMap((list) => within(list).getAllByRole('button'))
+      .map((button) => (button.textContent ?? '').trim())
     expect(labels).toEqual(NAV_LABELS)
+  })
+
+  it('gliedert die Navigation in benannte Gruppen (Start · Vermögen · Planung · Verwaltung)', () => {
+    renderLayout()
+    const groupLabels = (name: string): string[] =>
+      within(within(getNav()).getByRole('list', { name }))
+        .getAllByRole('button')
+        .map((button) => (button.textContent ?? '').trim())
+    expect(groupLabels('Start')).toEqual(['Übersicht'])
+    expect(groupLabels('Vermögen')).toEqual(['Konten', 'Depot', 'Sparpläne'])
+    expect(groupLabels('Planung')).toEqual(['Rebalancing', 'Ziele', 'Simulation'])
+    expect(groupLabels('Verwaltung')).toEqual(['Einstellungen', 'Daten & Backups'])
   })
 
   it('wechselt die Seite und markiert den aktiven Punkt mit aria-current="page"', () => {
@@ -98,10 +110,22 @@ describe('AppLayout – Navigation', () => {
   it('Startzustand ohne Datei: Button führt direkt zur Seite „Daten & Backups“', () => {
     renderLayout()
     act(() => {
-      screen.getByRole('button', { name: 'Zu „Daten & Backups“' }).click()
+      screen.getByRole('button', { name: 'Import und weitere Optionen' }).click()
     })
     expect(navButton('Daten & Backups')).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('heading', { level: 2, name: 'Daten & Backups' })).toBeInTheDocument()
+  })
+
+  it('Startzustand ohne Datei: „Neue leere Datei anlegen“ legt direkt einen Bestand an', () => {
+    const captured = renderLayout()
+    expect(screen.getByRole('button', { name: 'Datei öffnen …' })).toBeInTheDocument()
+    act(() => {
+      screen.getByRole('button', { name: 'Neue leere Datei anlegen' }).click()
+    })
+    expect(captured.current!.state.data).not.toBeNull()
+    // Die Übersicht zeigt jetzt Inhalte statt des Startzustands.
+    expect(screen.queryByText(/noch keine Finanzdaten geladen/)).toBeNull()
+    expect(screen.getByRole('heading', { level: 3, name: 'Vermögen' })).toBeInTheDocument()
   })
 })
 
@@ -128,6 +152,42 @@ describe('AppLayout – Kopfbereich', () => {
   // Rendert alle 9 Seiten in einem Durchlauf; unter paralleler Volllast kann
   // das die 5-s-Standard-Timeout reissen (beobachteter Flake der Finalabnahme,
   // fachlich immer gruen) - grosszuegige eigene Timeout statt Testverzicht.
+  it('bietet die Speicheraktion erst mit geladenen Daten an – auf jeder Seite im Kopfbereich', () => {
+    const captured = renderLayout()
+    const header = screen.getByRole('banner')
+    // jsdom ohne Save-Picker → ehrliche Beschriftung „Als Download speichern“.
+    expect(within(header).queryByRole('button', { name: 'Als Download speichern' })).toBeNull()
+
+    loadExampleData(captured)
+    expect(within(header).getByText('✓ Alle Änderungen gespeichert')).toBeInTheDocument()
+    for (const label of NAV_LABELS) {
+      act(() => {
+        navButton(label).click()
+      })
+      expect(
+        within(header).getByRole('button', { name: 'Als Download speichern' }),
+      ).toBeEnabled()
+    }
+  })
+
+  it('Speichern im Kopfbereich ruft dieselbe Aktion auf wie „Daten & Backups“ (Download-Fallback)', () => {
+    const captured = renderLayout()
+    loadExampleData(captured)
+    act(() => {
+      captured.current!.actions.markDirty()
+    })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    act(() => {
+      within(screen.getByRole('banner'))
+        .getByRole('button', { name: 'Als Download speichern' })
+        .click()
+    })
+    // Ohne Save-Picker fragt saveDirect vor dem Download nach; Abbruch lässt alles unverändert.
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(captured.current!.state.isDirty).toBe(true)
+    confirmSpy.mockRestore()
+  })
+
   it('zeigt den Ungespeichert-Hinweis nach markDirty auf JEDER Seite', { timeout: 30000 }, () => {
     const captured = renderLayout()
     loadExampleData(captured)
@@ -154,18 +214,25 @@ describe('AppLayout – Seiteninhalte', () => {
       navButton('Daten & Backups').click()
     })
     expect(screen.getByRole('heading', { level: 2, name: 'Daten & Backups' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Datei öffnen' })).toBeInTheDocument()
-    // jsdom ohne Save-Picker → ehrliche Beschriftung „(als Download)“.
-    expect(screen.getByRole('button', { name: 'Speichern (als Download)' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Exportieren (Download)' })).toBeInTheDocument()
+    const main = screen.getByRole('main')
+    // Aktionen nach Aufgaben gegliedert – je Aufgabe eine benannte Karte.
+    for (const card of ['Öffnen & neu anlegen', 'Speichern', 'Exportieren & sichern', 'Importieren']) {
+      expect(within(main).getByRole('region', { name: card })).toBeInTheDocument()
+    }
+    expect(within(main).getByRole('button', { name: 'Datei öffnen …' })).toBeInTheDocument()
+    // jsdom ohne Save-Picker → ehrliche Beschriftung „Als Download speichern“.
+    expect(within(main).getByRole('button', { name: 'Als Download speichern' })).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Exportieren und als gespeichert markieren' }),
+      within(main).getByRole('button', { name: 'Kopie exportieren (Download)' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Sicherungskopie herunterladen' }),
+      within(main).getByRole('button', { name: 'Exportieren und als gespeichert markieren' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Neue leere Datei' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Datei importieren (JSON):')).toBeInTheDocument()
+    expect(
+      within(main).getByRole('button', { name: 'Sicherungskopie herunterladen' }),
+    ).toBeInTheDocument()
+    expect(within(main).getByRole('button', { name: 'Neue leere Datei anlegen' })).toBeInTheDocument()
+    expect(within(main).getByLabelText('JSON-Datei für den Import auswählen')).toBeInTheDocument()
   })
 
   it('„Sparpläne“ ist seit M10 eine echte Seite (StartHint statt Platzhalter)', () => {

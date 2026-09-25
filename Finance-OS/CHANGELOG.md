@@ -3,6 +3,22 @@
 Alle nennenswerten Änderungen an Finance OS werden in dieser Datei dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/) (ohne externe Abhängigkeit); Versionierung nach [SemVer](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Changed
+
+- **Neues Oberflächen-Design „Tinte & Papier“:** ruhige Farbwelt nach Nutzervorlage (WCAG-AA-geprüft), Serifen-Überschriften, blau hinterlegte Eingaben vs. grünlich hinterlegte Rechenwerte, klare Button-Hierarchie, Karten und Status-Plaketten, volle Inhaltsbreite für Tabellen.
+- **Kopfbereich:** Speicherstatus als Pille und „In Datei speichern“ auf jeder Seite.
+- **Navigation** in Gruppen (Start · Vermögen · Planung · Verwaltung) mit Icons; Skip-Link und Fokus beim Seitenwechsel.
+- **Übersicht** mit Gesamtvermögen als Blickfang und Aufteilungsband Depot/Tagesgeld; **Daten & Backups** nach Aufgaben gegliedert.
+- **Klarere Beschriftungen:** „Speichern“ nur noch für die Datei; Formulare „… anlegen“ / „Änderungen übernehmen“ / „Wert übernehmen“ / „Snapshot übernehmen“; „Bestand durch Import ersetzen“, „Als geplante Einstellung vormerken“ u. a.
+- Startzustand ohne Datei bietet „Datei öffnen …“ und „Neue leere Datei anlegen“ direkt an.
+
+### Fixed
+
+- Konten: „Letzte Aktualisierung“ im deutschen Datumsformat statt ISO-Rohtext.
+- Simulator: Linienmuster der Diagramm-Legende werden nicht mehr auf volle Breite gestreckt.
+
 ## [1.0.0] – 2026-07-20
 
 Erste vollständige Version („Feature Complete“, V1-Abschlussprüfung mit data-architect- und reviewer-Freigabe; 815 automatisierte Tests grün). Details je Entwicklungsphase in `progress.md`. **Lokal final freigegeben am 2026-07-21 (Finalabnahme M17): lokaler Git-Tag `v1.0.0`, kein Push, keine Veröffentlichung – privates persönliches Projekt** (siehe `RELEASE_NOTES.md`).

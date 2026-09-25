@@ -14,6 +14,7 @@ import type { FormEvent } from 'react'
 import type { Account, AccountType, FinanceData, PortfolioPosition } from '../types/finance'
 import { cashValue, depotValue, latestEntry } from '../finance'
 import { formatEuro, parseGermanAmount } from '../format/money'
+import { formatIsoDateGerman } from '../format/date'
 import {
   ADDABLE_ACCOUNT_TYPES,
   addAccount,
@@ -24,6 +25,8 @@ import {
 } from '../data/accounts'
 import type { AccountActionResult } from '../data/accounts'
 import { useFinanceData } from '../state/useFinanceData'
+import { Icon } from '../components/Icon'
+import { StartHint } from '../components/StartHint'
 
 // --- Deutsches Typ-Mapping (UI) ---
 
@@ -73,12 +76,15 @@ interface AccountFormValues {
 
 function AccountForm({
   heading,
+  submitLabel,
   initial,
   typeEditable,
   onCancel,
   onSubmit,
 }: {
   heading: string
+  /** Beschriftung des Absende-Buttons („Konto anlegen“ bzw. „Änderungen übernehmen“). */
+  submitLabel: string
   initial: AccountFormValues
   /** Nur beim Hinzufügen wählbar; beim Bearbeiten wird der Typ als Text angezeigt. */
   typeEditable: boolean
@@ -216,7 +222,7 @@ function AccountForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">{submitLabel}</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -313,7 +319,7 @@ function BalanceForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">Wert übernehmen</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -337,10 +343,18 @@ function ValueCell({
       return <span>Wert ergibt sich aus den Depotpositionen</span>
     }
     const { amount, missingIds } = depotValue(accountPositions)
+    // Zahlenspalte (rechtsbündig, ohne automatischen Umbruch): Erklärung, Betrag und
+    // Zusatzhinweis stehen je in einer eigenen Zeile – der Textinhalt bleibt unverändert,
+    // der Betrag steht bündig mit den übrigen Beträgen und die Spalte bleibt schmal.
     return (
       <span>
-        Wert ergibt sich aus den Depotpositionen: {formatEuro(amount)}
-        {missingIds.length > 0 ? ' (enthält Positionen ohne erfassten Wert)' : ''}
+        Wert ergibt sich aus den Depotpositionen: <br />
+        {formatEuro(amount)}
+        {missingIds.length > 0 ? (
+          <>
+            <br /> (enthält Positionen ohne erfassten Wert)
+          </>
+        ) : null}
       </span>
     )
   }
@@ -355,7 +369,8 @@ function ValueCell({
 function lastUpdateDate(account: Account): string {
   if (account.type === 'depot' || account.type === 'pension') return '–'
   const entry = latestEntry(account.balanceHistory)
-  return entry === null ? '–' : entry.date
+  // Deutsches Datumsformat (TT.MM.JJJJ) – ISO-Rohtexte erscheinen nie im Endnutzertext.
+  return entry === null ? '–' : formatIsoDateGerman(entry.date)
 }
 
 // --- Seite ---
@@ -394,20 +409,6 @@ function formValuesFromAccount(account: Account): AccountFormValues {
       account.countsAsFreeLiquidity ?? defaultCountsAsFreeLiquidity(account.type),
     allowNegativeBalance: account.allowNegativeBalance === true,
   }
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
-  )
 }
 
 function CountingRules() {
@@ -550,17 +551,19 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
         Alle Konten des geladenen Bestands. Salden werden als datierte Einträge erfasst; der
         aktuelle Wert ist immer der jüngste Eintrag.
       </p>
-      <CountingRules />
 
       <div className="toolbar">
         <button
           type="button"
+          className="btn-primary"
           onClick={() => setEditor({ kind: 'add' })}
           disabled={state.isSaving || editor.kind === 'add'}
         >
+          <Icon name="plus" />
           Konto hinzufügen
         </button>
       </div>
+      <CountingRules />
 
       {actionError !== null ? (
         <p className="operation-error" role="alert">
@@ -571,6 +574,7 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
       {editor.kind === 'add' ? (
         <AccountForm
           heading="Konto hinzufügen"
+          submitLabel="Konto anlegen"
           initial={EMPTY_FORM}
           typeEditable={true}
           onCancel={() => setEditor({ kind: 'closed' })}
@@ -583,6 +587,7 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
           // sonst "klebt" der Zustand beim Zielwechsel und schreibt aufs falsche Konto.
           key={editingAccount.id}
           heading={`Konto bearbeiten: ${editingAccount.name}`}
+          submitLabel="Änderungen übernehmen"
           initial={formValuesFromAccount(editingAccount)}
           typeEditable={false}
           onCancel={() => setEditor({ kind: 'closed' })}
@@ -622,7 +627,9 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
                   </th>
                   <th scope="col">Institut</th>
                   <th scope="col">Zweck</th>
-                  <th scope="col">Aktueller Wert</th>
+                  <th scope="col" className="num">
+                    Aktueller Wert
+                  </th>
                   <th scope="col">Letzte Aktualisierung</th>
                   <th scope="col">Status</th>
                   <th scope="col">Aktionen</th>
@@ -638,11 +645,17 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
                       <td>{typeLabel(account.type)}</td>
                       <td>{account.institution ?? '–'}</td>
                       <td>{account.purpose ?? '–'}</td>
-                      <td>
+                      <td className="num">
                         <ValueCell account={account} positions={positions} />
                       </td>
                       <td>{lastUpdateDate(account)}</td>
-                      <td>{active ? 'Aktiv' : <strong>Inaktiv</strong>}</td>
+                      <td>
+                        {active ? (
+                          <span className="badge badge--ok">Aktiv</span>
+                        ) : (
+                          <span className="badge">Inaktiv</span>
+                        )}
+                      </td>
                       <td>
                         <div className="row-actions">
                           <button
@@ -658,6 +671,7 @@ export function AccountsPage({ onOpenDataBackups }: { onOpenDataBackups: () => v
                           </button>
                           <button
                             type="button"
+                            className={active ? 'btn-danger' : undefined}
                             aria-label={
                               active
                                 ? `Konto „${account.name}“ deaktivieren`

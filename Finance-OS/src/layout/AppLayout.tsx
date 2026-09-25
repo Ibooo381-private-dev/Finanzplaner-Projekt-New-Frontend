@@ -3,13 +3,21 @@
  * Desktop-Seitenleiste, mobil einklappbare Navigation (CSS-Media-Query).
  * Der Menü-Button ist ein echter <button> mit aria-expanded; das Menü
  * schließt nach jeder Auswahl. Aktive Seite als useState-Zustand.
+ *
+ * Redesign 2026-09: „Zum Inhalt springen“-Link für Tastaturnutzer; nach jedem
+ * Seitenwechsel springt die Ansicht an den Seitenanfang und der Fokus auf den
+ * Inhaltsbereich (Screenreader starten beim neuen Seitentitel). Die Höhe des
+ * klebenden Kopfbereichs wird als CSS-Variable gemessen, damit die
+ * Seitenleiste direkt darunter haftet.
  */
 
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AppHeader } from './Header'
 import { Navigation } from './Navigation'
 import { DEFAULT_PAGE } from './pages'
 import type { PageId } from './pages'
+import { Icon } from '../components/Icon'
+import { useFinanceData } from '../state/useFinanceData'
 import { AccountsPage } from '../pages/AccountsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { DataBackupsPage } from '../pages/DataBackupsPage'
@@ -21,17 +29,55 @@ import { SettingsPage } from '../pages/SettingsPage'
 import { SimulatorPage } from '../pages/SimulatorPage'
 
 export function AppLayout({ initialPage = DEFAULT_PAGE }: { initialPage?: PageId }) {
+  const { state } = useFinanceData()
   const [activePage, setActivePage] = useState<PageId>(initialPage)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const shellRef = useRef<HTMLDivElement>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  // Nur nach einem echten Seitenwechsel fokussieren – nie beim ersten Rendern.
+  const hasNavigated = useRef(false)
 
   function navigate(page: PageId): void {
+    hasNavigated.current = true
     setActivePage(page)
     // Mobil: Menü schließt nach Auswahl; auf dem Desktop ohne Wirkung.
     setIsMenuOpen(false)
   }
 
+  useEffect(() => {
+    if (!hasNavigated.current) return
+    const scroller = document.scrollingElement ?? document.documentElement
+    scroller.scrollTop = 0
+    mainRef.current?.focus({ preventScroll: true })
+  }, [activePage])
+
+  // Höhe des klebenden Kopfbereichs messen (CSS-Variable --header-h).
+  useLayoutEffect(() => {
+    const shell = shellRef.current
+    const header = shell?.querySelector<HTMLElement>('.app-header')
+    if (!shell || !header || typeof ResizeObserver === 'undefined') return
+    const update = (): void => {
+      shell.style.setProperty('--header-h', `${header.offsetHeight}px`)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" ref={shellRef}>
+      <a
+        className="skip-link"
+        href="#app-main"
+        onClick={(event) => {
+          // Fokus explizit setzen – reines Fragment-Springen fokussiert nicht in jedem Browser.
+          event.preventDefault()
+          mainRef.current?.focus()
+        }}
+      >
+        Zum Inhalt springen
+      </a>
       <AppHeader />
       <div className="app-body">
         <nav className="app-nav" aria-label="Hauptnavigation">
@@ -42,6 +88,7 @@ export function AppLayout({ initialPage = DEFAULT_PAGE }: { initialPage?: PageId
             aria-controls="app-nav-container"
             onClick={() => setIsMenuOpen((open) => !open)}
           >
+            <Icon name={isMenuOpen ? 'close' : 'menu'} />
             {isMenuOpen ? 'Menü schließen' : 'Menü öffnen'}
           </button>
           <div
@@ -49,9 +96,29 @@ export function AppLayout({ initialPage = DEFAULT_PAGE }: { initialPage?: PageId
             className={isMenuOpen ? 'nav-container nav-open' : 'nav-container'}
           >
             <Navigation activePage={activePage} onNavigate={navigate} />
+            <p className="nav-footnote">
+              Deine Daten bleiben in deiner JSON-Datei – nichts wird an einen Server gesendet.
+            </p>
           </div>
         </nav>
-        <main className="app-main">
+        <main className="app-main" id="app-main" ref={mainRef} tabIndex={-1}>
+          {/* Speichern ist von jeder Seite aus möglich (Kopfbereich) – Fehler des
+              Datei-Vorgangs deshalb auch überall zeigen; „Daten & Backups“ zeigt
+              sie ohnehin selbst, der Startzustand ohne Daten ebenfalls. */}
+          {state.operationError !== null &&
+          state.data !== null &&
+          activePage !== 'daten-backups' ? (
+            <div className="operation-error" role="alert">
+              <p>⚠ {state.operationError}</p>
+              <button
+                type="button"
+                className="btn-sm"
+                onClick={() => navigate('daten-backups')}
+              >
+                Zu Daten &amp; Backups
+              </button>
+            </div>
+          ) : null}
           {activePage === 'uebersicht' ? (
             <DashboardPage onNavigate={navigate} />
           ) : activePage === 'daten-backups' ? (

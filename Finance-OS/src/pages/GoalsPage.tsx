@@ -11,7 +11,7 @@
  * assignedOwnPlans/-Savings, countGoalsByStatus, compareGoalEntries) – die
  * metric-Verzweigung existiert NUR dort. Alle Datenänderungen laufen über die
  * reinen Funktionen in src/data/goals.ts (+ applyDataChange → DATA_CHANGED).
- * Abbrechen/unverändertes Speichern übernimmt NIE einen Bestand (Vergleich
+ * Abbrechen/unverändertes Absenden übernimmt NIE einen Bestand (Vergleich
  * vor Übernahme, auch bei Statusaktionen – K3). Der Stichtag kommt IMMER aus
  * dem injizierten todayIso des Provider-Kontexts.
  */
@@ -51,6 +51,8 @@ import {
 } from '../data/goals'
 import type { GoalActionResult, GoalInput } from '../data/goals'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
+import { Icon } from '../components/Icon'
 
 // --- Deutsche Labels (UI) ---
 
@@ -92,6 +94,22 @@ const DERIVED_STATUS_SYMBOLS: Record<DerivedGoalStatus, string> = {
   paused: '⏸',
   completed: '✔',
   archived: '■',
+}
+
+/**
+ * Plaketten-Farbe je abgeleitetem Status (nur Zusatzsignal – Symbol + Text
+ * bleiben die Bedeutungsträger): Handlungsbedarf rot, zu prüfen/pausiert gelb,
+ * aktiv/erreicht grün, geplant blau, abgeschlossen/archiviert neutral.
+ */
+const DERIVED_STATUS_BADGE_CLASS: Record<DerivedGoalStatus, string> = {
+  overdue: 'badge badge--danger',
+  active: 'badge badge--ok',
+  reachedNow: 'badge badge--ok',
+  notComputable: 'badge badge--warn',
+  planned: 'badge badge--info',
+  paused: 'badge badge--warn',
+  completed: 'badge',
+  archived: 'badge',
 }
 
 const STATUS_REASONS: Record<DerivedGoalStatus, string> = {
@@ -204,6 +222,7 @@ const REF_METRICS: readonly string[] = ['accountBalance', 'positionValue']
 
 function GoalForm({
   heading,
+  submitLabel,
   initial,
   data,
   isAutoGoal,
@@ -212,6 +231,8 @@ function GoalForm({
   onSubmit,
 }: {
   heading: string
+  /** Beschriftung des Absende-Buttons („Ziel anlegen“ / „Änderungen übernehmen“). */
+  submitLabel: string
   initial: GoalFormValues
   data: FinanceData
   /** true beim Notgroschen: Kennzahl/Zielbetrag sind nicht editierbar. */
@@ -430,8 +451,8 @@ function GoalForm({
           {fieldError('ref', 'goal-ref-error')}
           {selectedRef?.inactive ? (
             <p id="goal-ref-warning" className="field-warning" role="status">
-              ⚠ Die gewählte Referenz ist deaktiviert. Das Ziel kann gespeichert werden – der
-              Ist-Wert wird weiter berechnet, die Referenz zählt aber in keine aktive Summe.
+              ⚠ Die gewählte Referenz ist deaktiviert. Das Ziel kann trotzdem übernommen werden –
+              der Ist-Wert wird weiter berechnet, die Referenz zählt aber in keine aktive Summe.
             </p>
           ) : null}
         </div>
@@ -439,7 +460,8 @@ function GoalForm({
       {isAutoGoal ? (
         <div className="form-field">
           <p className="app-hint">
-            Zielbetrag (berechnet): <strong>{autoTargetText}</strong> – aus Faktor × Netto
+            Zielbetrag (berechnet):{' '}
+            <strong className="computed-value">{autoTargetText}</strong> – aus Faktor × Netto
             (Einstellungen). Eine manuelle Übersteuerung ist über die Einstellungen möglich; der
             berechnete Wert wird nie ungefragt ersetzt.
           </p>
@@ -524,7 +546,7 @@ function GoalForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">{submitLabel}</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -570,20 +592,6 @@ function GoalRules() {
         </li>
       </ul>
     </details>
-  )
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
   )
 }
 
@@ -741,7 +749,7 @@ export function GoalsPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
   }
 
   /**
-   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Speichern
+   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Absenden
    * löst KEIN applyDataChange aus (kein falscher Dirty-State) – Vergleich vor
    * Übernahme, auch bei Statusaktionen (K3).
    */
@@ -942,9 +950,11 @@ export function GoalsPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
         <div className="toolbar">
           <button
             type="button"
+            className="btn-primary"
             onClick={(event) => openEditor({ kind: 'add' }, event.currentTarget)}
             disabled={state.isSaving || editor.kind === 'add'}
           >
+            <Icon name="plus" />
             Ziel hinzufügen
           </button>
         </div>
@@ -958,6 +968,7 @@ export function GoalsPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
         {editor.kind === 'add' ? (
           <GoalForm
             heading="Ziel hinzufügen"
+            submitLabel="Ziel anlegen"
             initial={emptyForm}
             data={loadedData}
             isAutoGoal={false}
@@ -972,6 +983,7 @@ export function GoalsPage({ onOpenDataBackups }: { onOpenDataBackups: () => void
             // „klebt“ der Zustand beim Wechsel A→B und schreibt aufs falsche Ziel.
             key={editingRow.goal.id}
             heading={`Ziel bearbeiten: ${editingRow.goal.name}`}
+            submitLabel="Änderungen übernehmen"
             initial={formValuesFromGoal(editingRow.goal)}
             data={loadedData}
             isAutoGoal={isEmergencyFundGoal(editingRow.goal)}
@@ -1067,10 +1079,15 @@ function GoalCard({
   return (
     <li>
       {/* Fokus-Anker: nach Statusaktionen, deren Button verschwindet, landet
-          der Tastaturfokus hier statt auf document.body (A11y B2). */}
+          der Tastaturfokus hier statt auf document.body (A11y B2). Status als
+          Plakette (Symbol + Text, Farbe nur Zusatzsignal); „– Status:“ bleibt
+          für Screenreader im Text, entfällt aber optisch. */}
       <p className="goal-heading" id={`goal-card-heading-${goal.id}`} tabIndex={-1}>
-        <strong>{goal.name}</strong> – Status: {DERIVED_STATUS_SYMBOLS[status]}{' '}
-        {DERIVED_STATUS_LABELS[status]}
+        <strong>{goal.name}</strong>
+        <span className="visually-hidden"> – Status:</span>{' '}
+        <span className={DERIVED_STATUS_BADGE_CLASS[status]}>
+          {DERIVED_STATUS_SYMBOLS[status]} {DERIVED_STATUS_LABELS[status]}
+        </span>
       </p>
       <p>Zielart: {metricDisplay(goal, refInfo)}</p>
       <p>
@@ -1252,6 +1269,7 @@ function GoalCard({
         {storedStatus !== 'archived' ? (
           <button
             type="button"
+            className="btn-danger"
             aria-label={`Ziel „${goal.name}“ archivieren`}
             onClick={onArchive}
             disabled={isSaving}

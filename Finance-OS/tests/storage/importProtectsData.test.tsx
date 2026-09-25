@@ -71,7 +71,7 @@ describe('ST6 – fehlgeschlagener oder abgebrochener Import zerstört nichts (D
 
     // Schließen → rejected-Protokolleintrag im BESTEHENDEN Bestand.
     act(() => {
-      screen.getByRole('button', { name: 'Schließen' }).click()
+      screen.getByRole('button', { name: 'Vorschau schließen' }).click()
     })
 
     const after = captured.current!.state.data!
@@ -113,7 +113,7 @@ describe('ST6 – fehlgeschlagener oder abgebrochener Import zerstört nichts (D
     expect(screen.getByRole('heading', { name: 'Importvorschau' })).toBeInTheDocument()
 
     act(() => {
-      screen.getByRole('button', { name: 'Abbrechen' }).click()
+      screen.getByRole('button', { name: 'Import abbrechen' }).click()
     })
 
     const after = captured.current!.state.data!
@@ -138,7 +138,7 @@ describe('ST6 – fehlgeschlagener oder abgebrochener Import zerstört nichts (D
       )
     })
     act(() => {
-      screen.getByRole('button', { name: 'Import bestätigen' }).click()
+      screen.getByRole('button', { name: 'Bestand durch Import ersetzen' }).click()
     })
 
     const state = captured.current!.state

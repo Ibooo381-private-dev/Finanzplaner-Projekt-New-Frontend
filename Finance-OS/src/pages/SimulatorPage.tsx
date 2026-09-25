@@ -57,6 +57,8 @@ import type {
   SimulationInput,
 } from '../data/simulations'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
+import { Icon } from '../components/Icon'
 
 // --- Deutsche Labels (UI) ---
 
@@ -97,6 +99,14 @@ const OUTCOME_SYMBOLS: Record<SimulationGoalOutcome, string> = {
   late: '◷',
   'not-in-horizon': '⚠',
   'no-statement': '∅',
+}
+
+/** Plaketten-Variante je Ergebnis (Symbol + Text bleiben das Signal, Farbe nur Zusatz). */
+const OUTCOME_BADGES: Record<SimulationGoalOutcome, string> = {
+  reachable: 'badge badge--ok',
+  late: 'badge badge--warn',
+  'not-in-horizon': 'badge badge--warn',
+  'no-statement': 'badge',
 }
 
 const PERCENT_TEXT = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 })
@@ -323,6 +333,7 @@ function formValuesFromSimulation(simulation: Simulation): SimFormValues {
 
 function SimulationForm({
   heading,
+  submitLabel,
   initial,
   data,
   todayIso,
@@ -330,6 +341,8 @@ function SimulationForm({
   onSubmit,
 }: {
   heading: string
+  /** Beschriftung des Absende-Buttons („Simulation anlegen“ bzw. „Änderungen übernehmen“). */
+  submitLabel: string
   initial: SimFormValues
   data: FinanceData
   todayIso: string
@@ -610,8 +623,8 @@ function SimulationForm({
         <p className="app-hint">
           Übernimmt die aktuellen Bestandswerte nur ins Formular (Depot{' '}
           {depotUnknown ? 'unbekannt' : formatEuro(currentDepot.amount)}, Tagesgeld{' '}
-          {cashUnknown ? 'unbekannt' : formatEuro(currentCash.amount)}) – gespeichert wird erst
-          mit „Speichern“.
+          {cashUnknown ? 'unbekannt' : formatEuro(currentCash.amount)}) – in die Simulation
+          gelangen sie erst mit „{submitLabel}“.
         </p>
         {startStatus !== null ? (
           <p className="app-hint" role="status">
@@ -715,7 +728,11 @@ function SimulationForm({
                 <option value="cash">{TARGET_LABELS.cash}</option>
               </select>
             </div>
-            <button type="button" onClick={() => removeContributionRow(index)}>
+            <button
+              type="button"
+              className="btn-danger btn-sm"
+              onClick={() => removeContributionRow(index)}
+            >
               Beitrag {index + 1} entfernen
             </button>
           </div>
@@ -739,7 +756,12 @@ function SimulationForm({
         {fieldError('months', 'sim-months-error')}
         <div className="toolbar">
           {[12, 60, 120].map((quick) => (
-            <button key={quick} type="button" onClick={() => setField('monthsText', String(quick))}>
+            <button
+              key={quick}
+              type="button"
+              className="btn-sm"
+              onClick={() => setField('monthsText', String(quick))}
+            >
               {quick} Monate
             </button>
           ))}
@@ -824,7 +846,7 @@ function SimulationForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">{submitLabel}</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -872,20 +894,6 @@ function SimulatorRules() {
         </li>
       </ul>
     </details>
-  )
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
   )
 }
 
@@ -1027,9 +1035,9 @@ function VerlaufTable({
         <thead>
           <tr>
             <th scope="col">Monat</th>
-            <th scope="col">Tagesgeld</th>
-            <th scope="col">Depot</th>
-            <th scope="col">Gesamtvermögen</th>
+            <th scope="col" className="num">Tagesgeld</th>
+            <th scope="col" className="num">Depot</th>
+            <th scope="col" className="num">Gesamtvermögen</th>
           </tr>
         </thead>
         <tbody>
@@ -1039,9 +1047,9 @@ function VerlaufTable({
                 {formatIsoMonthGerman(projectionMonthIso(todayIso, point.monthIndex))}
                 {point.monthIndex === 0 ? ' (Start)' : ` (Monat ${point.monthIndex})`}
               </th>
-              <td>{formatEuro(point.cash)}</td>
-              <td>{formatEuro(point.depot)}</td>
-              <td>{formatEuro(point.total)}</td>
+              <td className="num">{formatEuro(point.cash)}</td>
+              <td className="num">{formatEuro(point.depot)}</td>
+              <td className="num">{formatEuro(point.total)}</td>
             </tr>
           ))}
         </tbody>
@@ -1180,8 +1188,10 @@ function SimulationDetail({
           {analyses.map((analysis) => (
             <li key={analysis.goal.id}>
               <p className="goal-heading">
-                <strong>{analysis.goal.name}</strong> – {OUTCOME_SYMBOLS[analysis.outcome]}{' '}
-                {OUTCOME_LABELS[analysis.outcome]}
+                <strong>{analysis.goal.name}</strong> –{' '}
+                <span className={OUTCOME_BADGES[analysis.outcome]}>
+                  {OUTCOME_SYMBOLS[analysis.outcome]} {OUTCOME_LABELS[analysis.outcome]}
+                </span>
               </p>
               <p>{analysis.reason}</p>
             </li>
@@ -1267,7 +1277,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
   }
 
   /**
-   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Speichern
+   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Absenden
    * löst KEIN applyDataChange aus (kein falscher Dirty-State) – Vergleich vor
    * Übernahme (K3-Muster).
    */
@@ -1400,7 +1410,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
         <strong>Projektion – keine Prognose, keine Anlageberatung.</strong> Simulationen ändern
         nie Konten, Depot, Sparpläne oder Ziele.
       </p>
-      <p className="app-hint">
+      <p className="app-hint page-lead">
         Szenarien der Vermögensentwicklung aus Sparraten und optionaler Renditeannahme (Stichtag:{' '}
         {formatIsoDateGerman(todayIso)}; projiziert wird ab dem Folgemonat). Gespeichert werden
         nur die Parameter – Ergebnisse werden bei jeder Anzeige neu berechnet.
@@ -1442,9 +1452,11 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
         <div className="toolbar">
           <button
             type="button"
+            className="btn-primary"
             onClick={(event) => openEditor({ kind: 'add' }, event.currentTarget)}
             disabled={state.isSaving || editor.kind === 'add'}
           >
+            <Icon name="plus" />
             Neue Simulation
           </button>
         </div>
@@ -1462,6 +1474,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
         {editor.kind === 'add' ? (
           <SimulationForm
             heading="Neue Simulation"
+            submitLabel="Simulation anlegen"
             initial={EMPTY_FORM}
             data={loadedData}
             todayIso={todayIso}
@@ -1474,6 +1487,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
             // key erzwingt eine frische Formularinstanz je Simulation (M8-Lehre).
             key={editingSimulation.id}
             heading={`Simulation bearbeiten: ${editingSimulation.name}`}
+            submitLabel="Änderungen übernehmen"
             initial={formValuesFromSimulation(editingSimulation)}
             data={loadedData}
             todayIso={todayIso}
@@ -1557,6 +1571,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
                     </button>
                     <button
                       type="button"
+                      className="btn-danger"
                       aria-label={`Simulation „${simulation.name}“ löschen`}
                       onClick={() => handleDelete(simulation)}
                       disabled={state.isSaving}
@@ -1629,7 +1644,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
                       <tr>
                         <th scope="col">Kennzahl</th>
                         {comparisonColumns.map((column) => (
-                          <th key={column.id} scope="col">
+                          <th key={column.id} scope="col" className="num">
                             {column.name}
                           </th>
                         ))}
@@ -1639,7 +1654,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
                       <tr>
                         <th scope="row">Annahme (Rendite p. a.)</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>
+                          <td key={column.id} className="num">
                             {PERCENT_TEXT.format(column.annualReturnRate * 100)} %
                           </td>
                         ))}
@@ -1647,7 +1662,7 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
                       <tr>
                         <th scope="row">Zeitraum</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>
+                          <td key={column.id} className="num">
                             {column.months} {column.months === 1 ? 'Monat' : 'Monate'}
                           </td>
                         ))}
@@ -1661,37 +1676,41 @@ export function SimulatorPage({ onOpenDataBackups }: { onOpenDataBackups: () => 
                       <tr>
                         <th scope="row">Endvermögen (projiziert)</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>{formatEuro(column.endTotal)}</td>
+                          <td key={column.id} className="num">{formatEuro(column.endTotal)}</td>
                         ))}
                       </tr>
                       <tr>
                         <th scope="row">Davon Depot</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>{formatEuro(column.endDepot)}</td>
+                          <td key={column.id} className="num">{formatEuro(column.endDepot)}</td>
                         ))}
                       </tr>
                       <tr>
                         <th scope="row">Davon Tagesgeld (Liquidität)</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>{formatEuro(column.endCash)}</td>
+                          <td key={column.id} className="num">{formatEuro(column.endCash)}</td>
                         ))}
                       </tr>
                       <tr>
                         <th scope="row">Eingezahlt gesamt</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>{formatEuro(column.contributedTotal)}</td>
+                          <td key={column.id} className="num">
+                            {formatEuro(column.contributedTotal)}
+                          </td>
                         ))}
                       </tr>
                       <tr>
                         <th scope="row">Davon eigene Sparleistung (G8)</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>{formatEuro(column.contributedOwn)}</td>
+                          <td key={column.id} className="num">
+                            {formatEuro(column.contributedOwn)}
+                          </td>
                         ))}
                       </tr>
                       <tr>
                         <th scope="row">Wertzuwachs aus der Annahme</th>
                         {comparisonColumns.map((column) => (
-                          <td key={column.id}>
+                          <td key={column.id} className="num">
                             {column.growthFromAssumption === null
                               ? 'entfällt (0 %)'
                               : formatEuro(column.growthFromAssumption)}

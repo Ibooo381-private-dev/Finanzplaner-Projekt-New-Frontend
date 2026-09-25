@@ -8,7 +8,7 @@
  * „Übergewichtungen sind ohne Verkäufe nicht abbaubar“), Übernahme-Flow
  * (G5: confirm inkl. Beträge → plannedChange + Dirty; Abbruch Byte-identisch;
  * Ist-Daten/Sparpläne unverändert), Simulations-Kennzeichnung (A7, kein
- * Übernahme-Button), gespeicherte Planungen inkl. discard sowie
+ * Übernahme-Button), vorgemerkte Planungen inkl. discard sowie
  * keine-IDs/NaN- und A11y-Grundmuster. Muster wie tests/pages/goalsPage.test.tsx.
  */
 
@@ -90,7 +90,7 @@ function simulationRegion(): HTMLElement {
 }
 
 function plannedRegion(): HTMLElement {
-  return screen.getByRole('region', { name: 'Gespeicherte Planungen' })
+  return screen.getByRole('region', { name: 'Vorgemerkte Planungen' })
 }
 
 /** Gespeicherte Beispiel-Planung (programmatisch – die Beispieldatei bleibt unangetastet). */
@@ -122,7 +122,7 @@ describe('RebalancingPage – Leerzustände je Profiltyp', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Rebalancing' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('Standard ist das AKTIVE Profil (Ebene A, Sparraten-Referenz): Referenz-Hinweis statt Rechnung', () => {
@@ -386,7 +386,7 @@ describe('RebalancingPage – Sparraten-Vorschlag (A1-Budget, F17/F18)', () => {
     ).toBeInTheDocument()
     expect(within(section).queryByRole('table')).toBeNull()
     expect(
-      within(section).queryByRole('button', { name: 'Als geplante Einstellung speichern' }),
+      within(section).queryByRole('button', { name: 'Als geplante Einstellung vormerken' }),
     ).toBeNull()
   })
 })
@@ -400,7 +400,7 @@ describe('RebalancingPage – Übernahme-Flow (G5)', () => {
     const plansBefore = JSON.stringify(before.savingsPlans)
     act(() => {
       within(savingsRegion())
-        .getByRole('button', { name: 'Als geplante Einstellung speichern' })
+        .getByRole('button', { name: 'Als geplante Einstellung vormerken' })
         .click()
     })
     // Bestätigungstext nennt die Beträge (G5).
@@ -428,7 +428,7 @@ describe('RebalancingPage – Übernahme-Flow (G5)', () => {
     const beforeJson = JSON.stringify(before)
     act(() => {
       within(savingsRegion())
-        .getByRole('button', { name: 'Als geplante Einstellung speichern' })
+        .getByRole('button', { name: 'Als geplante Einstellung vormerken' })
         .click()
     })
     expect(captured.current!.state.data).toBe(before)
@@ -455,7 +455,7 @@ describe('RebalancingPage – Voll-Simulation (A7)', () => {
   })
 })
 
-describe('RebalancingPage – gespeicherte Planungen (Anzeige + Verwerfen)', () => {
+describe('RebalancingPage – vorgemerkte Planungen (Anzeige + Verwerfen)', () => {
   it('zeigt Datum deutsch, Profil- und Positionsnamen (nie IDs) und das Status-Label', () => {
     const captured = renderPage()
     loadData(captured, withPlannedChange(loadExample(), 'planned'))
@@ -509,6 +509,85 @@ describe('RebalancingPage – gespeicherte Planungen (Anzeige + Verwerfen)', () 
     expect(plannedRegion().textContent).toContain(
       'Verworfen – bleibt zur Historie erhalten und wird nicht gelöscht.',
     )
+  })
+})
+
+describe('RebalancingPage – Redesign: Beschriftungen und Darstellung', () => {
+  it('„vormerken“ statt „speichern“: Hauptaktion, Dialog, Rückmeldung mit Weg in die Datei', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    loadSeedWithJobProfile()
+    const section = savingsRegion()
+    expect(
+      within(section).queryByRole('button', { name: 'Als geplante Einstellung speichern' }),
+    ).toBeNull()
+    const button = within(section).getByRole('button', {
+      name: 'Als geplante Einstellung vormerken',
+    })
+    expect(button).toHaveClass('btn-primary')
+    act(() => {
+      button.click()
+    })
+    const confirmText = String(confirmSpy.mock.calls[0][0])
+    expect(confirmText).toContain('Sparraten-Vorschlag als geplante Einstellung vormerken?')
+    expect(confirmText).not.toContain('speichern')
+    const status = within(savingsRegion()).getByRole('status')
+    expect(status).toHaveTextContent('Die Planung wurde vorgemerkt')
+    expect(status).toHaveTextContent('erst über die Speichern-Schaltfläche oben')
+  })
+
+  it('Zahlenspalten rechtsbündig (num); Handlungsstufen als Plakette, Text unverändert', () => {
+    loadSeedWithJobProfile()
+    const table = within(tableRegion()).getByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Kaufbedarf' })).toHaveClass('num')
+    expect(within(table).getByRole('columnheader', { name: 'Abweichung (Pp)' })).toHaveClass(
+      'num',
+    )
+    expect(
+      within(table).getByRole('columnheader', { name: 'Position/Gruppe' }),
+    ).not.toHaveClass('num')
+    expect(within(table).getByText('+44,28 Pp')).toHaveClass('num')
+    const saleBadges = within(table).getAllByText(
+      '‼ Empfehlung – Rebalancing sinnvoll (inkl. Verkaufsoption als letzte Möglichkeit)',
+    )
+    expect(saleBadges.length).toBeGreaterThan(0)
+    for (const badge of saleBadges) expect(badge).toHaveClass('badge', 'badge--danger')
+    for (const badge of within(table).getAllByText('✓ OK (nur Anzeige)')) {
+      expect(badge).toHaveClass('badge', 'badge--ok')
+    }
+    // Simulation und Vorschlag: Zahlenspalten ebenfalls rechtsbündig.
+    expect(
+      within(simulationRegion()).getByRole('columnheader', { name: 'Neuer Wert' }),
+    ).toHaveClass('num')
+    expect(
+      within(savingsRegion()).getByRole('columnheader', { name: 'Vorgeschlagene Rate' }),
+    ).toHaveClass('num')
+  })
+
+  it('Planungs-Status als Plakette; „Verwerfen“ als Gefahr-Aktion, aria-label unverändert', () => {
+    const captured = renderPage()
+    loadData(captured, withPlannedChange(loadExample(), 'planned'))
+    expect(within(plannedRegion()).getByText('◷ geplant, nicht ausgeführt')).toHaveClass(
+      'badge',
+      'badge--info',
+    )
+    const discard = within(plannedRegion()).getByRole('button', {
+      name: 'Planung vom 18.07.2026 verwerfen',
+    })
+    expect(discard).toHaveClass('btn-danger')
+    expect(discard).toHaveTextContent('Verwerfen')
+
+    loadData(captured, withPlannedChange(loadExample(), 'discarded'))
+    const discardedBadge = within(plannedRegion()).getByText('■ verworfen')
+    expect(discardedBadge).toHaveClass('badge')
+    expect(discardedBadge).not.toHaveClass('badge--info')
+  })
+
+  it('Leerzustand der Planungen zitiert den neuen Button-Namen', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    const text = plannedRegion().textContent?.replace(/\s+/g, ' ') ?? ''
+    expect(text).toContain('Noch keine vorgemerkten Planungen')
+    expect(text).toContain('„Als geplante Einstellung vormerken“')
   })
 })
 

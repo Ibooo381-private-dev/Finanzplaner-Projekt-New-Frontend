@@ -97,7 +97,7 @@ describe('GoalsPage – Leerzustände', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 2, name: 'Ziele' })).toBeInTheDocument()
     expect(screen.getByText(/noch keine Finanzdaten geladen/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('Bestand ohne Ziele: verständlicher Leerzustand mit nächstem Schritt', () => {
@@ -346,7 +346,7 @@ describe('GoalsPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Zielbetrag in Euro (leer = offen)'), {
       target: { value: '2.000' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ziel anlegen' }))
     const card = goalCard('VW Puffer')
     expect(
       within(card).getByText(`Ist: ${euroText(627.59)} · Ziel: ${euroText(2000)}`),
@@ -369,7 +369,7 @@ describe('GoalsPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Aktueller Ist-Wert in Euro (leer = offen)'), {
       target: { value: '250,50' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ziel anlegen' }))
     const card = goalCard('Konzertkasse')
     expect(
       within(card).getByText(`Ist: ${euroText(250.5)} · Ziel: ${euroText(1000)}`),
@@ -384,7 +384,7 @@ describe('GoalsPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Fehlerziel' } })
     const amountInput = screen.getByLabelText('Zielbetrag in Euro (leer = offen)')
     fireEvent.change(amountInput, { target: { value: '12.34' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ziel anlegen' }))
     expect(screen.getByText(/Bitte einen gültigen Betrag eingeben/)).toBeInTheDocument()
     expect(amountInput).toHaveAttribute('aria-invalid', 'true')
     expect(document.activeElement).toBe(amountInput)
@@ -399,7 +399,7 @@ describe('GoalsPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Zielart (Kennzahl)'), {
       target: { value: 'accountBalance' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ziel anlegen' }))
     expect(screen.getByText('Bitte eine Referenz wählen.')).toBeInTheDocument()
     expect(captured.current!.state.isDirty).toBe(false)
   })
@@ -417,7 +417,7 @@ describe('GoalsPage – Formulare', () => {
     expect(screen.getByLabelText('Name *')).toHaveValue('50.000 EUR Gesamtvermoegen')
   })
 
-  it('Abbrechen und unverändertes Speichern lösen NIE einen Dirty-State aus (K2/K3)', () => {
+  it('Abbrechen und unverändertes Übernehmen lösen NIE einen Dirty-State aus (K2/K3)', () => {
     const captured = renderPage()
     loadData(captured, loadExample())
     // Abbrechen nach Änderung.
@@ -425,9 +425,9 @@ describe('GoalsPage – Formulare', () => {
     fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Anderer Name' } })
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
     expect(captured.current!.state.isDirty).toBe(false)
-    // Dialog öffnen und unverändert speichern (Byte-identisch, K2).
+    // Dialog öffnen und unverändert übernehmen (Byte-identisch, K2).
     fireEvent.click(screen.getByRole('button', { name: 'Ziel „10.000 EUR Depot“ bearbeiten' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Änderungen übernehmen' }))
     expect(captured.current!.state.isDirty).toBe(false)
     expect(screen.getByText('10.000 EUR Depot')).toBeInTheDocument()
   })
@@ -440,8 +440,8 @@ describe('GoalsPage – Formulare', () => {
     expect(screen.queryByLabelText('Zielbetrag in Euro (leer = offen)')).toBeNull()
     expect(screen.getByText(/Zielbetrag \(berechnet\):/)).toBeInTheDocument()
     expect(screen.getByText(/nie ungefragt ersetzt/)).toBeInTheDocument()
-    // Unverändertes Speichern bleibt ohne Dirty-State (kein targetAmount-Patch).
-    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    // Unverändertes Übernehmen bleibt ohne Dirty-State (kein targetAmount-Patch).
+    fireEvent.click(screen.getByRole('button', { name: 'Änderungen übernehmen' }))
     expect(captured.current!.state.isDirty).toBe(false)
   })
 
@@ -476,6 +476,53 @@ describe('GoalsPage – Formulare', () => {
     // Escape außerhalb der Popup-Felder schließt weiterhin (bestehendes Verhalten).
     fireEvent.keyDown(screen.getByLabelText('Name *'), { key: 'Escape' })
     expect(screen.queryByRole('form', { name: 'Ziel hinzufügen' })).toBeNull()
+  })
+})
+
+describe('GoalsPage – Beschriftungen und Darstellung (Redesign)', () => {
+  it('Absende-Button: „Ziel anlegen“ bzw. „Änderungen übernehmen“, nie „Speichern“', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    const addButton = screen.getByRole('button', { name: 'Ziel hinzufügen' })
+    expect(addButton).toHaveClass('btn-primary')
+    fireEvent.click(addButton)
+    const addForm = screen.getByRole('form', { name: 'Ziel hinzufügen' })
+    expect(within(addForm).getByRole('button', { name: 'Ziel anlegen' })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    expect(within(addForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+    fireEvent.click(within(addForm).getByRole('button', { name: 'Abbrechen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ziel „Urlaub“ bearbeiten' }))
+    const editForm = screen.getByRole('form', { name: 'Ziel bearbeiten: Urlaub' })
+    expect(
+      within(editForm).getByRole('button', { name: 'Änderungen übernehmen' }),
+    ).toHaveAttribute('type', 'submit')
+    expect(within(editForm).queryByRole('button', { name: 'Speichern' })).toBeNull()
+  })
+
+  it('Zielkarten: nur „Archivieren“ als Gefahr-Aktion; Status-Plakette mit gleichem Text', () => {
+    const captured = renderPage()
+    loadData(captured, loadExample())
+    expect(
+      screen.getByRole('button', { name: 'Ziel „10.000 EUR Depot“ archivieren' }),
+    ).toHaveClass('btn-danger')
+    for (const action of ['bearbeiten', 'pausieren', 'abschließen']) {
+      expect(
+        screen.getByRole('button', { name: `Ziel „10.000 EUR Depot“ ${action}` }),
+      ).not.toHaveClass('btn-danger')
+    }
+    // Symbol + Text bleiben Bedeutungsträger; die Farbe der Plakette ist Zusatz.
+    const activeCard = goalCard('Notgroschen')
+    expect(within(activeCard).getByText('● Aktiv')).toHaveClass('badge', 'badge--ok')
+    expect(within(goalCard('Physisches Gold')).getByText('∅ Nicht berechenbar')).toHaveClass(
+      'badge',
+      'badge--warn',
+    )
+    // Screenreader hören weiterhin „Name – Status: …“.
+    expect(activeCard.querySelector('.goal-heading')!.textContent).toBe(
+      'Notgroschen – Status: ● Aktiv',
+    )
   })
 })
 

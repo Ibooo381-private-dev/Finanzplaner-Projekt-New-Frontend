@@ -11,7 +11,7 @@ describe('App (Grundlayout)', () => {
   it('zeigt ohne Daten einen verständlichen Leerzustand mit Weg zu „Daten & Backups“', () => {
     render(<App />)
     expect(screen.getByText(/keine Finanzdaten geladen/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Zu „Daten & Backups“' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import und weitere Optionen' })).toBeInTheDocument()
   })
 
   it('startet auf der Seite „Übersicht“ und zeigt im Kopfbereich „Keine Datei geöffnet“', () => {

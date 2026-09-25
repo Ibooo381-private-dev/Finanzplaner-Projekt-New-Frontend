@@ -10,7 +10,7 @@
  * nextDueDate, planStatus, goalProgress, referenceAllocation, roundToUnit),
  * alle Datenänderungen laufen über die reinen Funktionen in
  * src/data/savingsPlans.ts (+ applyDataChange → DATA_CHANGED, setzt isDirty).
- * Abbrechen/unverändertes Speichern übernimmt NIE einen Bestand (Vergleich vor
+ * Abbrechen/unverändertes Absenden übernimmt NIE einen Bestand (Vergleich vor
  * Übernahme). Der Stichtag kommt IMMER aus dem injizierten todayIso des
  * Provider-Kontexts – nie aus einer eigenen Systemuhr.
  */
@@ -62,6 +62,8 @@ import {
 } from '../data/savingsPlans'
 import type { SavingsPlanActionResult, SavingsPlanInput } from '../data/savingsPlans'
 import { useFinanceData } from '../state/useFinanceData'
+import { StartHint } from '../components/StartHint'
+import { Icon } from '../components/Icon'
 
 // --- Deutsche Labels (UI) ---
 
@@ -104,6 +106,18 @@ const STATUS_SYMBOLS: Record<SavingsPlanStatus, string> = {
   paused: '⏸',
   ended: '■',
   completed: '✓',
+}
+
+/**
+ * Plaketten-Klasse je Status (nur Gestaltung – Text + Symbol bleiben das Signal):
+ * aktiv → ok, geplant → info, pausiert → warn, beendet/abgeschlossen → neutral.
+ */
+const STATUS_BADGE_CLASSES: Record<SavingsPlanStatus, string> = {
+  active: 'badge badge--ok',
+  planned: 'badge badge--info',
+  paused: 'badge badge--warn',
+  ended: 'badge',
+  completed: 'badge',
 }
 
 /** Herkunft (dokumentiertes flowType-Mapping, kein eigenes Feld). */
@@ -240,12 +254,15 @@ function splitTargetKey(key: string): { targetKind: TargetKind; targetId: string
 
 function PlanForm({
   heading,
+  submitLabel,
   initial,
   data,
   onCancel,
   onSubmit,
 }: {
   heading: string
+  /** Beschriftung des Absende-Buttons: „Sparplan anlegen“ bzw. „Änderungen übernehmen“. */
+  submitLabel: string
   initial: PlanFormValues
   data: FinanceData
   onCancel: () => void
@@ -422,9 +439,9 @@ function PlanForm({
         {fieldError('target', 'plan-target-error')}
         {target.inactive ? (
           <p id="plan-target-warning" className="field-warning" role="status">
-            ⚠ Das gewählte Ziel „{target.name}“ ist deaktiviert. Der Sparplan kann gespeichert
-            werden – Zuflüsse auf ein deaktiviertes Ziel zählen aber in keine aktive Summe. Prüfe,
-            ob das Ziel zuerst aktiviert werden sollte (Deaktivieren ist umkehrbar).
+            ⚠ Das gewählte Ziel „{target.name}“ ist deaktiviert. Der Sparplan kann trotzdem
+            übernommen werden – Zuflüsse auf ein deaktiviertes Ziel zählen aber in keine aktive
+            Summe. Prüfe, ob das Ziel zuerst aktiviert werden sollte (Deaktivieren ist umkehrbar).
           </p>
         ) : null}
       </div>
@@ -606,7 +623,7 @@ function PlanForm({
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit">Speichern</button>
+        <button type="submit">{submitLabel}</button>
         <button type="button" onClick={onCancel}>
           Abbrechen
         </button>
@@ -660,20 +677,6 @@ function SavingsRules() {
         </li>
       </ul>
     </details>
-  )
-}
-
-function StartHint({ onOpenDataBackups }: { onOpenDataBackups: () => void }) {
-  return (
-    <div className="start-hint">
-      <p>
-        Es sind noch keine Finanzdaten geladen. Öffne unter „Daten &amp; Backups“ eine vorhandene
-        JSON-Datei, lege eine neue leere Datei an oder importiere einen Bestand.
-      </p>
-      <button type="button" onClick={onOpenDataBackups}>
-        Zu „Daten &amp; Backups“
-      </button>
-    </div>
   )
 }
 
@@ -1036,7 +1039,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
   }
 
   /**
-   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Speichern
+   * Übernimmt ein Ergebnis der reinen Datenfunktionen. Unverändertes Absenden
    * löst KEIN applyDataChange aus (kein falscher Dirty-State) – Vergleich vor
    * Übernahme.
    */
@@ -1478,9 +1481,11 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
         <div className="toolbar">
           <button
             type="button"
+            className="btn-primary"
             onClick={(event) => openEditor({ kind: 'add' }, event.currentTarget)}
             disabled={state.isSaving || editor.kind === 'add'}
           >
+            <Icon name="plus" />
             Sparplan hinzufügen
           </button>
         </div>
@@ -1494,6 +1499,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
         {editor.kind === 'add' ? (
           <PlanForm
             heading="Sparplan hinzufügen"
+            submitLabel="Sparplan anlegen"
             initial={emptyForm}
             data={loadedData}
             onCancel={closeEditor}
@@ -1506,6 +1512,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
             // „klebt“ der Zustand beim Wechsel A→B und schreibt auf den falschen Plan.
             key={editingPlan.id}
             heading={`Sparplan bearbeiten: ${editingPlan.name}`}
+            submitLabel="Änderungen übernehmen"
             initial={formValuesFromPlan(editingPlan)}
             data={loadedData}
             onCancel={closeEditor}
@@ -1598,7 +1605,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
                       </th>
                       <th scope="col">Zuflussart</th>
                       <th scope="col">Herkunft</th>
-                      <th scope="col" aria-sort={ariaSort('amount')}>
+                      <th scope="col" className="num" aria-sort={ariaSort('amount')}>
                         <button
                           type="button"
                           className="sort-button"
@@ -1619,7 +1626,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
                           Status{sortIndicator('status')}
                         </button>
                       </th>
-                      <th scope="col" aria-sort={ariaSort('annual')}>
+                      <th scope="col" className="num" aria-sort={ariaSort('annual')}>
                         <button
                           type="button"
                           className="sort-button"
@@ -1628,7 +1635,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
                           Jahresbetrag{sortIndicator('annual')}
                         </button>
                       </th>
-                      <th scope="col">Monatsbetrag geglättet (Analysewert)</th>
+                      <th scope="col" className="num">Monatsbetrag geglättet (Analysewert)</th>
                       <th scope="col" aria-sort={ariaSort('nextDue')}>
                         <button
                           type="button"
@@ -1655,35 +1662,37 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
                             {target.inactive ? (
                               <>
                                 {' '}
-                                <strong>⚠ Ziel inaktiv</strong>
+                                <strong className="badge badge--warn">⚠ Ziel inaktiv</strong>
                               </>
                             ) : null}
                             {!target.exists ? (
                               <>
                                 {' '}
-                                <strong>⚠ Ziel unbekannt</strong>
+                                <strong className="badge badge--danger">⚠ Ziel unbekannt</strong>
                               </>
                             ) : null}
                           </td>
                           <td>{FLOW_TYPE_LABELS[plan.flowType]}</td>
                           <td>{ORIGIN_LABELS[originOf(plan.flowType)]}</td>
-                          <td>{amountText(plan)}</td>
+                          <td className="num">{amountText(plan)}</td>
                           <td>{INTERVAL_LABELS[plan.interval]}</td>
                           <td>{formatIsoDateGerman(plan.validFrom)}</td>
                           <td>
                             {plan.validUntil == null ? '–' : formatIsoDateGerman(plan.validUntil)}
                           </td>
                           <td>
-                            {STATUS_SYMBOLS[status]} {STATUS_LABELS[status]}
+                            <span className={STATUS_BADGE_CLASSES[status]}>
+                              {STATUS_SYMBOLS[status]} {STATUS_LABELS[status]}
+                            </span>
                           </td>
-                          <td>
+                          <td className="num">
                             {row.annual === null
                               ? 'variabel'
                               : plan.interval === 'once'
                                 ? `${formatEuro(row.annual)} (einmalig)`
                                 : formatEuro(row.annual)}
                           </td>
-                          <td>
+                          <td className="num">
                             {plan.interval === 'once'
                               ? '– (einmalig, nicht geglättet)'
                               : plan.amount === null
@@ -1731,6 +1740,7 @@ export function SavingsPlansPage({ onOpenDataBackups }: { onOpenDataBackups: () 
                               {canEnd ? (
                                 <button
                                   type="button"
+                                  className="btn-danger"
                                   aria-label={`Sparplan „${plan.name}“ beenden`}
                                   onClick={() => handleEnd(plan)}
                                   disabled={state.isSaving}
@@ -1796,10 +1806,10 @@ function SavingsRateProfileComparison({
         <thead>
           <tr>
             <th scope="col">Ziel</th>
-            <th scope="col">Ist-%</th>
-            <th scope="col">Soll-%</th>
-            <th scope="col">Abweichung (Pp)</th>
-            <th scope="col">Abweichung (EUR/Monat)</th>
+            <th scope="col" className="num">Ist-%</th>
+            <th scope="col" className="num">Soll-%</th>
+            <th scope="col" className="num">Abweichung (Pp)</th>
+            <th scope="col" className="num">Abweichung (EUR/Monat)</th>
           </tr>
         </thead>
         <tbody>
@@ -1824,14 +1834,14 @@ function SavingsRateProfileComparison({
             return (
               <tr key={`${target.refKind}-${target.ref}`}>
                 <th scope="row">{label}</th>
-                <td>
+                <td className="num">
                   {actualShare === null
                     ? 'nicht berechenbar'
                     : formatShare(actualShare, percentDecimals)}
                 </td>
-                <td>{formatShare(target.weight, percentDecimals)}</td>
-                <td>{pp === null ? '–' : formatPp(pp, percentDecimals)}</td>
-                <td>{formatEuro(eurDiff)}</td>
+                <td className="num">{formatShare(target.weight, percentDecimals)}</td>
+                <td className="num">{pp === null ? '–' : formatPp(pp, percentDecimals)}</td>
+                <td className="num">{formatEuro(eurDiff)}</td>
               </tr>
             )
           })}

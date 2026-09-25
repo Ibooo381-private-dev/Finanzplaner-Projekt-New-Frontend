@@ -1,268 +1,137 @@
+/*
+ * Finance OS – Design-System (Redesign 2026-09, Farbwelt „Tinte & Papier“).
+ *
+ * Grundsätze (Skill frontend-design, docs/design-system.md):
+ * - ruhig, seriös, übersichtlich: Papierton als Fläche, Tinte als Text,
+ *   Serifen nur für Überschriften und große Kennzahlen.
+ * - Eingaben (blau hinterlegt) und berechnete Werte (grünlich hinterlegt)
+ *   sind visuell unterscheidbar.
+ * - Farbe ist nie das einzige Signal: Status tragen immer Text + Symbol,
+ *   aktive Zustände zusätzlich Schriftstärke/Rahmen.
+ * - Alle Text-/Flächenkombinationen erfüllen WCAG AA (≥ 4,5:1 für Text,
+ *   ≥ 3:1 für Bedienelement-Rahmen). Das Vorlagen-Gelb (#BD9424) wird daher
+ *   nur für Punkte/Rahmen genutzt, Warntext nutzt --gelb-text.
+ */
+
 :root {
-  color-scheme: light dark;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.6;
+  color-scheme: light;
+
+  /* Grundfarben */
+  --tinte: #1b2b34;
+  --tinte-weich: #4a5d67;
+  --papier: #eff1ec;
+  --papier-hell: #f9faf7;
+  --weiss: #ffffff;
+  --linie: #cbd2c8;
+  --linie-fein: #dfe3da;
+
+  /* Eingabe vs. Berechnung */
+  --eingabe-fill: #e4edf4;
+  --eingabe-rand: #5e7f96;
+  --eingabe-rand-hover: #3f6179;
+  --rechen-fill: #e5eee7;
+
+  /* Allokationsfarben (Band, Diagramme) */
+  --fix: #24404c;
+  --sparen: #3e7c76;
+  --frei: #bcc5b6;
+
+  /* Status */
+  --gruen: #2f7a4f;
+  --gruen-text: #25603f;
+  --gruen-flaeche: #e6f0e9;
+  --gelb: #bd9424;
+  --gelb-text: #7d5f0c;
+  --gelb-flaeche: #fbf4e0;
+  --rot: #b0472f;
+  --rot-text: #9a3b25;
+  --rot-flaeche: #f8e9e4;
+  --blau-text: #1d4e63;
+  --blau-flaeche: #e4edf4;
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --radius: 3px;
+  --radius-gross: 6px;
+  --schatten: 0 1px 2px rgba(27, 43, 52, 0.06), 0 2px 8px rgba(27, 43, 52, 0.05);
+  --header-h: 0px;
+
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--tinte);
+  background: var(--papier);
+  -webkit-text-size-adjust: 100%;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--papier);
+  color: var(--tinte);
 }
 
-/* Sichtbare Fokuszustände für alle Bedienelemente (Tastaturbedienung). */
+::selection {
+  background: #c9dbe8;
+}
+
+/* ================================================================
+   Fokus: überall sichtbar (Tastaturbedienung)
+   ================================================================ */
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 summary:focus-visible,
-a:focus-visible {
-  outline: 3px solid #2563eb;
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--tinte);
   outline-offset: 2px;
 }
 
-/* --- Grundgerüst: Kopfbereich oben, darunter Seitenleiste + Inhalt --- */
-
-.app-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Programmatischer Fokus beim Seitenwechsel: kein Rahmen um den ganzen Inhalt. */
+.app-main:focus {
+  outline: none;
 }
 
-.app-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 1.5rem;
-  padding: 0.85rem 1.5rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.45);
+/* ================================================================
+   Typografie
+   ================================================================ */
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--tinte);
+  text-wrap: balance;
 }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 1.3rem;
+p,
+li,
+dd {
+  text-wrap: pretty;
 }
 
-.header-status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.5rem;
-  margin: 0;
-  font-size: 0.9rem;
+strong {
+  font-weight: 650;
 }
 
-.header-status div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--linie-fein);
+  border-radius: 2px;
+  padding: 0.05em 0.3em;
 }
-
-.header-status dt {
-  font-weight: 600;
-}
-
-.header-status dd {
-  margin: 0;
-}
-
-/* Ungespeichert-Hinweis: Text + Symbol, zusätzlich deutlich gerahmt. */
-.dirty-indicator {
-  margin: 0;
-  font-weight: 700;
-  border: 1px solid currentcolor;
-  border-radius: 999px;
-  padding: 0 0.75rem;
-}
-
-.saved-indicator {
-  margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.85;
-}
-
-.app-body {
-  display: flex;
-  flex: 1;
-  align-items: stretch;
-}
-
-/* --- Navigation: Desktop feste Seitenleiste, mobil einklappbar --- */
-
-.app-nav {
-  flex: 0 0 13rem;
-  border-right: 1px solid rgba(128, 128, 128, 0.45);
-  padding: 1rem 0.75rem;
-}
-
-.nav-toggle {
-  display: none;
-  font: inherit;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-}
-
-.nav-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.nav-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  background: none;
-  border: none;
-  border-left: 3px solid transparent;
-  border-radius: 0.25rem;
-  padding: 0.4rem 0.5rem;
-  cursor: pointer;
-}
-
-.nav-item:hover {
-  background: rgba(128, 128, 128, 0.16);
-}
-
-/* Aktiver Punkt: Marker-Symbol + Schriftstärke + Balken – nicht nur Farbe. */
-.nav-item[aria-current='page'] {
-  font-weight: 700;
-  border-left-color: currentcolor;
-  background: rgba(128, 128, 128, 0.12);
-}
-
-.nav-marker {
-  display: inline-block;
-  width: 1rem;
-}
-
-/* --- Inhaltsbereich --- */
-
-.app-main {
-  flex: 1;
-  min-width: 0;
-  max-width: 52rem;
-  padding: 1.5rem 1.5rem 3rem;
-}
-
-.app-main h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.45rem;
-}
-
-.app-main h3 {
-  margin: 1.5rem 0 0.5rem;
-  font-size: 1.05rem;
-}
-
-.app-main h4 {
-  margin: 0.75rem 0 0.35rem;
-  font-size: 1rem;
-}
-
-.app-hint {
-  opacity: 0.75;
-}
-
-/* Startzustand ohne geladene Datei: Hinweis + direkter Weg zu Daten & Backups. */
-.start-hint {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 1rem;
-  margin: 1.5rem 0;
-  max-width: 36rem;
-}
-
-.start-hint p {
-  margin-top: 0;
-}
-
-.start-hint button {
-  font: inherit;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-.toolbar button {
-  font: inherit;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-}
-
-.toolbar button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.import-field {
-  margin: 0.75rem 0;
-}
-
-.operation-error {
-  border: 1px solid currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  font-weight: 600;
-}
-
-.issue-box {
-  border: 1px solid currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.75rem 1rem;
-  margin: 1rem 0;
-}
-
-.issue-box h3 {
-  margin: 0 0 0.5rem;
-}
-
-.issue-box ul {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.issue-box-error {
-  border-width: 2px;
-}
-
-.issue-box code {
-  word-break: break-all;
-}
-
-.import-preview {
-  border: 2px solid currentcolor;
-  border-radius: 0.35rem;
-  padding: 1rem;
-  margin: 1.5rem 0;
-}
-
-.import-preview h3 {
-  margin-top: 0;
-}
-
-.counts {
-  margin: 0.5rem 0;
-  padding-left: 1.25rem;
-}
-
-/* --- Konten-Seite (M8) --- */
 
 /* Nur für Screenreader sichtbar (z. B. Tabellen-caption). */
 .visually-hidden {
@@ -277,200 +146,569 @@ a:focus-visible {
   border: 0;
 }
 
-.table-wrap {
-  overflow-x: auto;
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  vertical-align: -0.2em;
 }
 
-/* Als fokussierbare Region (tabindex=0): sichtbarer Fokus für Tastatur-Scrollen. */
-.table-wrap:focus-visible {
-  outline: 3px solid #2563eb;
-  outline-offset: 2px;
+/* ================================================================
+   Grundgerüst: Kopfbereich oben, darunter Seitenleiste + Inhalt
+   ================================================================ */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.accounts-table {
-  border-collapse: collapse;
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 50;
+  background: var(--tinte);
+  color: var(--papier-hell);
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+/* --- Kopfbereich --- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 2rem;
+  padding: 0.8rem clamp(1rem, 3vw, 2rem);
+  background: var(--papier-hell);
+  border-bottom: 2px solid var(--tinte);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex: none;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius);
+  background: var(--tinte);
+  color: var(--papier-hell);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.55rem;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.header-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  flex: 1 1 18rem;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.header-status div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0 0.4rem;
+}
+
+.header-status dt {
+  color: var(--tinte-weich);
+}
+
+.header-status dt::after {
+  content: ':';
+}
+
+.header-status dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+  margin-left: auto;
+}
+
+/* Speicherstatus als Pille: Text + Symbol, nie nur Farbe. */
+.dirty-indicator,
+.saved-indicator,
+.nodata-indicator {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.dirty-indicator {
+  font-weight: 700;
+  color: var(--gelb-text);
+  background: var(--gelb-flaeche);
+  border-color: var(--gelb);
+}
+
+.saved-indicator {
+  color: var(--gruen-text);
+  background: var(--gruen-flaeche);
+  border-color: #b9d3c1;
+}
+
+.nodata-indicator {
+  color: var(--tinte-weich);
+  background: var(--papier);
+  border-color: var(--linie);
+}
+
+/* --- Körper: Seitenleiste + Inhalt --- */
+
+.app-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 15.5rem minmax(0, 1fr);
+  align-items: start;
+}
+
+.app-nav {
+  position: sticky;
+  top: var(--header-h);
+  max-height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+  padding: 1.25rem 0.85rem 2rem;
+  border-right: 1px solid var(--linie);
+  min-height: calc(100vh - var(--header-h));
+}
+
+.nav-toggle {
+  display: none;
+}
+
+.nav-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.nav-group-label {
+  display: block;
+  margin: 0 0 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   width: 100%;
-  margin: 1rem 0;
-  font-size: 0.95rem;
-}
-
-.accounts-table th,
-.accounts-table td {
-  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
-  padding: 0.45rem 0.6rem;
   text-align: left;
-  vertical-align: top;
-}
-
-.accounts-table thead th {
-  font-weight: 600;
-}
-
-.accounts-table tbody th {
-  font-weight: 600;
-}
-
-.sort-button {
   font: inherit;
-  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--tinte);
   background: none;
   border: none;
-  padding: 0;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.5rem 0.65rem;
+  min-height: 2.5rem;
+  justify-content: flex-start;
+  font-weight: 450;
   cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.nav-item .icon {
+  color: var(--tinte-weich);
+}
+
+.nav-item:hover {
+  background: var(--linie-fein);
+}
+
+/* Aktiver Punkt: Fläche + Balken + Schriftstärke – nicht nur Farbe. */
+.nav-item[aria-current='page'] {
+  font-weight: 700;
+  color: var(--papier-hell);
+  background: var(--tinte);
+  border-left-color: var(--sparen);
+}
+
+.nav-item[aria-current='page'] .icon {
+  color: var(--papier-hell);
+}
+
+.nav-footnote {
+  margin: 1.75rem 0.65rem 0;
+  font-size: 0.78rem;
+  color: var(--tinte-weich);
+}
+
+/* --- Inhaltsbereich --- */
+
+.app-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 82rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem) clamp(1rem, 3vw, 2.5rem) 4rem;
+}
+
+/* ================================================================
+   Seitenkopf und Abschnitte
+   ================================================================ */
+
+.page > h2 {
+  margin: 0 0 0.4rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+/* Einleitungssatz direkt unter dem Seitentitel. */
+.page > h2 + .app-hint,
+.page > .page-lead {
+  margin: 0 0 1.25rem;
+  max-width: 62ch;
+  font-size: 1rem;
+  color: var(--tinte-weich);
+}
+
+.app-main h3 {
+  margin: 2.5rem 0 0.6rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.45rem;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+}
+
+.app-main h4 {
+  margin: 1.4rem 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+/* Abschnitt mit Titel + Aktionen in einer Zeile. */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+/* ================================================================
+   Knöpfe – klare Hierarchie
+   primär (gefüllt) · sekundär (Rahmen, Standard) · Gefahr (rot) · leise
+   ================================================================ */
+
+button {
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--tinte);
+  background: var(--papier-hell);
+  border: 1px solid var(--tinte);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.95rem;
+  min-height: 2.35rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--tinte);
+  color: var(--papier-hell);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Primäraktion: gefüllt (je Bereich höchstens eine). */
+.btn-primary,
+.form-actions button[type='submit'] {
+  background: var(--tinte);
+  color: var(--papier-hell);
+  border-color: var(--tinte);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled),
+.form-actions button[type='submit']:hover:not(:disabled) {
+  background: #2c4250;
+  border-color: #2c4250;
+}
+
+/* Gefährliche/destruktive Aktion: klar von „Abbrechen“ unterscheidbar. */
+.btn-danger {
+  color: var(--rot-text);
+  border-color: var(--rot);
+  background: var(--papier-hell);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--rot);
+  border-color: var(--rot);
+  color: var(--weiss);
+}
+
+.btn-danger.btn-primary,
+.form-actions .btn-danger[type='submit'] {
+  background: var(--rot);
+  color: var(--weiss);
+  border-color: var(--rot);
+}
+
+.btn-danger.btn-primary:hover:not(:disabled) {
+  background: #963a25;
+}
+
+/* Leise Aktion (z. B. Navigation innerhalb der Seite). */
+.btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tinte-weich);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  padding-inline: 0.4rem;
+}
+
+.btn-quiet:hover:not(:disabled) {
+  background: var(--linie-fein);
+  color: var(--tinte);
+}
+
+.btn-sm,
+.row-actions button {
+  font-size: 0.82rem;
+  padding: 0.3rem 0.6rem;
+  min-height: 2rem;
+}
+
+/* Aktionsleisten */
+.toolbar,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.form-actions {
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linie-fein);
 }
 
 .row-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+  min-width: 13.5rem;
 }
 
-.row-actions button {
+/* In Karten (z. B. Ziele) volle Breite statt Tabellen-Mindestbreite. */
+.goal-list .row-actions {
+  min-width: 0;
+}
+
+/* Sortier-Buttons im Tabellenkopf: sehen aus wie Kopfzeilentext. */
+.sort-button {
   font: inherit;
-  font-size: 0.85rem;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
+  font-weight: 650;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  min-height: 0;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.25em;
 }
 
-.row-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+.sort-button:hover:not(:disabled) {
+  background: none;
+  color: var(--tinte);
+  text-decoration: underline;
 }
 
-.account-form {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 1rem;
-  margin: 1rem 0;
-  max-width: 36rem;
+/* ================================================================
+   Karten, Leerzustand, Startzustand
+   ================================================================ */
+
+.card {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  padding: 1.15rem 1.3rem 1.3rem;
+  box-shadow: var(--schatten);
 }
 
-.account-form h3 {
+.card > h3:first-child,
+.card > h4:first-child {
   margin-top: 0;
 }
 
-.form-field {
-  margin: 0 0 0.75rem;
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
 }
 
-.form-field > label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.2rem;
+.card-grid > .card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
 }
 
-.form-field input[type='text'],
-.form-field input[type='date'],
-.form-field select {
-  font: inherit;
-  width: 100%;
-  max-width: 24rem;
-  padding: 0.35rem 0.5rem;
+.card-grid > .card .toolbar {
+  margin-bottom: 0;
 }
 
-.form-field-checkbox > label {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  font-weight: 600;
-}
-
-.form-field-checkbox .app-hint {
-  margin: 0.15rem 0 0;
-  font-size: 0.9rem;
-}
-
-/* Fehler neben dem betroffenen Feld: Rahmen + Symbolik über Text, nicht nur Farbe. */
-.field-error {
-  border: 1px solid currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0.35rem 0 0;
-  font-weight: 600;
-  max-width: 24rem;
-}
-
-.form-actions {
+.card-grid > .card {
   display: flex;
-  /* B8 (M14): lange Beschriftungen dürfen umbrechen statt zu überlaufen. */
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  flex-direction: column;
 }
 
-.form-actions button {
-  font: inherit;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
+.card-grid > .card > .toolbar,
+.card-grid > .card > .import-field {
+  margin-top: auto;
 }
 
-/* Einstellungen (M14): thematische Feldgruppen innerhalb des einen Formulars. */
-.settings-form {
+.card-lead {
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--tinte-weich);
+}
+
+.start-hint {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-left: 4px solid var(--sparen);
+  border-radius: var(--radius-gross);
+  padding: 1.5rem 1.6rem;
+  margin: 1.5rem 0;
   max-width: 44rem;
+  box-shadow: var(--schatten);
 }
 
-.settings-fieldset {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 0.75rem 1rem;
+.start-hint h3 {
+  margin: 0 0 0.4rem !important;
+  font-size: 1.35rem;
+}
+
+.start-hint p {
   margin: 0 0 1rem;
 }
 
-.settings-fieldset legend {
-  font-weight: 700;
-  padding: 0 0.35rem;
+.start-hint .toolbar {
+  margin: 0;
 }
 
-.model-hint {
-  margin: 0.75rem 0;
-  max-width: 44rem;
+.start-hint .start-steps {
+  margin: 0 0 1.1rem;
+  padding-left: 1.2rem;
+  color: var(--tinte-weich);
+  font-size: 0.93rem;
 }
 
-.model-hint summary {
-  cursor: pointer;
-  font-weight: 600;
+/* ================================================================
+   Hinweise, Warnungen, Fehler, Erfolg
+   Symbol + Text + Rahmen – Farbe nie einziges Signal.
+   ================================================================ */
+
+.app-hint {
+  color: var(--tinte-weich);
+  font-size: 0.93rem;
+  max-width: 72ch;
 }
 
-.sum-line {
-  margin: 0.75rem 0 0.25rem;
-}
-
-/* --- Depot-Seite (M9) --- */
-
-/* Kennzahlen-Kacheln: max. 4 pro Gruppe, responsiv umbrechend. */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0;
+.warning-note,
+.success-note,
+.operation-error,
+.field-error,
+.field-warning,
+.simulation-banner {
+  border-radius: var(--radius);
   max-width: 52rem;
 }
 
-.kpi-tile {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 0.6rem 0.8rem;
-}
-
-.kpi-tile dt {
-  font-size: 0.85rem;
-  font-weight: 600;
-  opacity: 0.8;
-}
-
-.kpi-tile dd {
-  margin: 0.15rem 0 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-/* Warnhinweise mit Text + Symbol (Farbe nie einziges Signal). */
 .warning-note {
-  border: 1px solid currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  margin: 0.75rem 0;
-  max-width: 44rem;
+  border: 1px solid #e3cf95;
+  border-left: 4px solid var(--gelb);
+  background: var(--gelb-flaeche);
+  color: #5a4509;
+  padding: 0.65rem 0.9rem;
+  margin: 0.9rem 0;
 }
 
 .warning-note p {
@@ -483,180 +721,928 @@ a:focus-visible {
 }
 
 .success-note {
-  border: 1px solid currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  margin: 0.75rem 0;
+  border: 1px solid #b9d3c1;
+  border-left: 4px solid var(--gruen);
+  background: var(--gruen-flaeche);
+  color: var(--gruen-text);
+  padding: 0.6rem 0.9rem;
+  margin: 0.9rem 0;
   font-weight: 600;
-  max-width: 44rem;
+}
+
+.operation-error {
+  border: 1px solid #e3b7aa;
+  border-left: 4px solid var(--rot);
+  background: var(--rot-flaeche);
+  color: var(--rot-text);
+  padding: 0.65rem 0.9rem;
+  margin: 0.9rem 0;
+  font-weight: 600;
+}
+
+/* Fehler neben dem betroffenen Feld. */
+.field-error {
+  border: 1px solid #e3b7aa;
+  border-left: 3px solid var(--rot);
+  background: var(--rot-flaeche);
+  color: var(--rot-text);
+  padding: 0.3rem 0.6rem;
+  margin: 0.4rem 0 0;
+  font-weight: 600;
+  font-size: 0.88rem;
+  max-width: 28rem;
 }
 
 /* Feldnahe Warnung (kein Fehler, blockiert nicht). */
 .field-warning {
-  border: 1px dashed currentcolor;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0.35rem 0 0;
-  max-width: 24rem;
-  font-size: 0.9rem;
+  border: 1px dashed var(--gelb);
+  background: var(--gelb-flaeche);
+  color: #5a4509;
+  padding: 0.3rem 0.6rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  max-width: 28rem;
 }
 
-/* Snapshot-Vollerfassung: Gruppen mit je einem Betragsfeld pro Eintrag. */
-.snapshot-form {
-  max-width: 44rem;
+.issue-box {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-left: 4px solid var(--gelb);
+  border-radius: var(--radius-gross);
+  padding: 0.9rem 1.15rem;
+  margin: 1rem 0;
+  max-width: 60rem;
 }
 
-.snapshot-group {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 0.5rem 0.75rem 0.25rem;
-  margin: 0 0 0.75rem;
+.issue-box h3 {
+  margin: 0 0 0.5rem !important;
+  font-size: 1.15rem;
 }
 
-.snapshot-group legend {
-  font-weight: 600;
-  padding: 0 0.25rem;
-}
-
-.snapshot-entry-state {
-  margin: 0.15rem 0 0;
-  font-size: 0.85rem;
-  opacity: 0.85;
-}
-
-/* --- Übersicht / Dashboard (M7) --- */
-
-/* Kompakte Fakten-Liste (Dateistatus, „Weitere Kennzahlen“). */
-.facts-list {
-  margin: 0.5rem 0;
-}
-
-.facts-list > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
-  padding: 0.1rem 0;
-}
-
-.facts-list dt {
-  font-weight: 600;
-}
-
-.facts-list dd {
+.issue-box ul {
   margin: 0;
+  padding-left: 1.25rem;
 }
 
-/* Zusatztext in KPI-Kacheln (Untertext / „enthält unbekannte Werte“) – Text, nie nur Farbe. */
-.kpi-note {
-  display: block;
+.issue-box li + li {
+  margin-top: 0.3rem;
+}
+
+.issue-tech {
   font-size: 0.8rem;
-  font-weight: 400;
-  opacity: 0.85;
-  margin-top: 0.15rem;
+  color: var(--tinte-weich);
+  white-space: nowrap;
 }
 
-.goal-list {
-  list-style: none;
-  margin: 0.75rem 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-  max-width: 44rem;
+.issue-tech code {
+  white-space: normal;
+  word-break: break-all;
 }
 
-.goal-list > li {
-  border: 1px solid rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 0.6rem 0.8rem;
+.issue-box-error {
+  border-left-color: var(--rot);
+  background: #fdf7f5;
 }
 
-.goal-list p {
-  margin: 0.2rem 0;
-}
-
-/* Kopfzeile eines Ziel-Eintrags (Name + Status). */
-.goal-heading {
-  margin: 0 0 0.25rem;
-}
-
-/* Barrierearme Fortschrittsanzeige: <progress> plus sichtbarer Textwert daneben. */
-.goal-progress progress {
-  width: min(14rem, 60%);
-  vertical-align: middle;
+.issue-box code {
+  word-break: break-all;
 }
 
 .quality-list {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: 0.35rem;
-}
-
-/* --- Rebalancing (M11): unübersehbare Simulations-Kennzeichnung --- */
-
-.simulation-banner {
-  border: 2px solid currentcolor;
-  border-radius: 0.35rem;
-  padding: 0.6rem 0.8rem;
-  margin: 0.75rem 0;
-  font-size: 1.05rem;
-  max-width: 44rem;
-}
-
-/* --- Simulator (M13): ergänzendes SVG-Diagramm + Formular-Beitragszeilen --- */
-
-.sim-chart {
-  max-width: 44rem;
-  margin: 0.75rem 0;
-}
-
-.sim-chart svg {
-  width: 100%;
-  height: auto;
-  border: 1px solid rgba(128, 128, 128, 0.35);
-  border-radius: 0.35rem;
-}
-
-/* Sichtbare Legende (Farbe UND Strichmuster – Farbe nie einziges Signal). */
-.sim-chart-legend {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
-  margin: 0.35rem 0 0;
-  padding: 0;
-  font-size: 0.9rem;
-}
-
-.sim-chart-legend li {
-  display: inline-flex;
-  align-items: center;
   gap: 0.4rem;
 }
 
-/* Beitragszeile im Simulations-Formular (Label/Betrag/Zuflussart/Ziel + Entfernen). */
-.sim-contribution-row {
-  border: 1px dashed rgba(128, 128, 128, 0.45);
-  border-radius: 0.35rem;
-  padding: 0.5rem 0.75rem;
-  margin: 0 0 0.75rem;
+/* Hypothese-/Simulations-Kennzeichnung: unübersehbar. */
+.simulation-banner {
+  border: 2px dashed var(--sparen);
+  background: #eaf2f0;
+  color: var(--tinte);
+  padding: 0.75rem 1rem;
+  margin: 0.9rem 0;
+  font-size: 1rem;
 }
 
-.sim-compare-choice {
-  display: inline-flex;
+/* ================================================================
+   Aufklappbare Erklärungen (details)
+   ================================================================ */
+
+.model-hint {
+  margin: 0.9rem 0;
+  max-width: 60rem;
+  background: var(--papier-hell);
+  border: 1px solid var(--linie-fein);
+  border-radius: var(--radius-gross);
+  padding: 0 1rem;
+}
+
+.model-hint > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.93rem;
+  padding: 0.65rem 0;
+  list-style: none;
+  display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  color: var(--tinte);
+}
+
+.model-hint > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* „i“-Symbol + Pfeil zeigen: hier gibt es eine Erklärung zum Aufklappen. */
+.model-hint > summary::before {
+  content: 'i';
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--tinte-weich);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--tinte-weich);
+}
+
+.model-hint > summary::after {
+  content: '▾';
+  margin-left: auto;
+  color: var(--tinte-weich);
+  transition: transform 150ms ease;
+}
+
+.model-hint[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.model-hint[open] > summary {
+  border-bottom: 1px solid var(--linie-fein);
+  margin-bottom: 0.6rem;
+}
+
+.model-hint > :last-child:not(summary) {
+  margin-bottom: 0.9rem;
+}
+
+.model-hint ul {
+  padding-left: 1.2rem;
+}
+
+.model-hint li + li {
+  margin-top: 0.3rem;
+}
+
+/* ================================================================
+   Kennzahlen
+   ================================================================ */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+
+.kpi-tile {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-top: 3px solid var(--fix);
+  border-radius: var(--radius-gross);
+  padding: 0.85rem 1rem 0.95rem;
+  box-shadow: var(--schatten);
+}
+
+.kpi-tile dt {
+  font-size: 0.84rem;
+  font-weight: 550;
+  color: var(--tinte-weich);
+  line-height: 1.35;
+}
+
+.kpi-tile dd {
+  margin: 0.35rem 0 0;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Zusatztext in KPI-Kacheln – Text, nie nur Farbe. */
+.kpi-note {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--tinte-weich);
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
+/* Kompakte Fakten-Liste (Zeilen dt/dd). */
+.facts-list {
+  margin: 0.5rem 0;
+  max-width: 44rem;
+}
+
+.facts-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.2rem 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--linie-fein);
+}
+
+.facts-list > div:last-child {
+  border-bottom: none;
+}
+
+.facts-list dt {
+  color: var(--tinte-weich);
+}
+
+.facts-list dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sum-line {
+  margin: 0.9rem 0 0.25rem;
+  padding: 0.6rem 0.9rem;
+  display: inline-block;
+  background: var(--rechen-fill);
+  border-radius: var(--radius);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Berechneter Wert (z. B. Vorschau „Faktor × Netto“): grünlich hinterlegt. */
+.computed-value {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: var(--rechen-fill);
+  border-radius: var(--radius);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Übersicht: Vermögensband (Hero) --- */
+
+.hero {
+  margin: 0.5rem 0 1.25rem;
+  padding: 1.4rem 1.5rem 1.2rem;
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  box-shadow: var(--schatten);
+}
+
+.hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--tinte-weich);
+  max-width: 30rem;
+}
+
+.band {
+  display: flex;
+  width: 100%;
+  height: 3.25rem;
+  border: 1px solid var(--tinte);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, #e2e6dd 0 6px, #d6dcd1 6px 12px);
+}
+
+.band-part {
+  display: block;
+  align-content: center;
+  padding: 0 0.85rem;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 3.25rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
-/* --- Sparpläne (M10): Filterleiste mit sichtbarem Aktiv-Zustand --- */
+.band-part--depot {
+  background: var(--fix);
+  color: #eef2f0;
+}
+
+.band-part--cash {
+  background: var(--sparen);
+  color: #f2f7f5;
+}
+
+.band-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.92rem;
+}
+
+.band-legend > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.band-legend dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--tinte-weich);
+}
+
+.band-legend dd {
+  margin: 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.band-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+.band-swatch--depot {
+  background: var(--fix);
+}
+
+.band-swatch--cash {
+  background: var(--sparen);
+}
+
+/* Gesamtvermögen als Blickfang: dieselbe Kachel-Semantik, große Serifenzahl. */
+.hero-kpi {
+  margin: 0;
+}
+
+.kpi-tile--hero {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.kpi-tile--hero dt {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.kpi-tile--hero dd {
+  font-size: clamp(2.3rem, 6vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* Schnellzugriff */
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.quick-links button {
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  min-height: 3.25rem;
+}
+
+/* ================================================================
+   Tabellen
+   ================================================================ */
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  box-shadow: var(--schatten);
+}
+
+/* Als fokussierbare Region (tabindex=0): sichtbarer Fokus für Tastatur-Scrollen. */
+.table-wrap:focus-visible {
+  outline: 2px solid var(--tinte);
+  outline-offset: 2px;
+}
+
+.accounts-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.accounts-table th,
+.accounts-table td {
+  border-bottom: 1px solid var(--linie-fein);
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.accounts-table th:first-child,
+.accounts-table td:first-child {
+  padding-left: 0.9rem;
+}
+
+.accounts-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f1f3ee;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--tinte-weich);
+  border-bottom: 1px solid var(--linie);
+  vertical-align: bottom;
+  min-width: 4rem;
+}
+
+.accounts-table tbody th {
+  font-weight: 600;
+  min-width: 9rem;
+}
+
+/* Aktionsspalte breiter Tabellen: bleibt beim waagerechten Scrollen sichtbar. */
+.accounts-table:has(.row-actions) thead th:last-child,
+.accounts-table td:has(> .row-actions) {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--papier-hell);
+  box-shadow:
+    inset 1px 0 0 var(--linie-fein),
+    -8px 0 10px -8px rgba(27, 43, 52, 0.18);
+}
+
+.accounts-table:has(.row-actions) thead th:last-child {
+  background: #f1f3ee;
+}
+
+.accounts-table tbody tr:hover td:has(> .row-actions) {
+  background: #f3f5f0;
+}
+
+.accounts-table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.accounts-table tbody tr:hover {
+  background: #f3f5f0;
+}
+
+.accounts-table tfoot td,
+.accounts-table tfoot th {
+  border-top: 2px solid var(--tinte);
+  border-bottom: none;
+  font-weight: 650;
+}
+
+/* Zahlenspalten: rechtsbündig, tabellarische Ziffern. Erklärtexte in
+   Zahlenzellen dürfen umbrechen; die Mindestbreite hält Beträge wie
+   „1.369,14 €“ und Prozente einzeilig. */
+.accounts-table .num {
+  text-align: right;
+}
+
+.accounts-table th.num {
+  white-space: nowrap;
+}
+
+.accounts-table td.num {
+  min-width: 6.75rem;
+}
+
+.accounts-table caption:not(.visually-hidden) {
+  caption-side: top;
+  text-align: left;
+  padding: 0.75rem 0.8rem 0.25rem;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Status-Plaketten (Text + Symbol, nie nur Farbe)
+   ================================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--linie);
+  background: var(--papier);
+  color: var(--tinte-weich);
+}
+
+/* Lange Status-Texte in Tabellenzellen dürfen umbrechen. */
+.accounts-table .badge {
+  white-space: normal;
+}
+
+.badge--ok {
+  color: var(--gruen-text);
+  background: var(--gruen-flaeche);
+  border-color: #b9d3c1;
+}
+
+.badge--warn {
+  color: var(--gelb-text);
+  background: var(--gelb-flaeche);
+  border-color: #e3cf95;
+}
+
+.badge--danger {
+  color: var(--rot-text);
+  background: var(--rot-flaeche);
+  border-color: #e3b7aa;
+}
+
+.badge--info {
+  color: var(--blau-text);
+  background: var(--blau-flaeche);
+  border-color: #b9cfdf;
+}
+
+/* ================================================================
+   Formulare – Eingaben blau hinterlegt
+   ================================================================ */
+
+.account-form {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-top: 3px solid var(--tinte);
+  border-radius: var(--radius-gross);
+  padding: 1.25rem 1.4rem 1.35rem;
+  margin: 1.25rem 0;
+  max-width: 44rem;
+  box-shadow: var(--schatten);
+}
+
+.account-form > h3:first-child,
+.account-form > h4:first-child {
+  margin-top: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.4rem;
+}
+
+/* Feldgruppen innerhalb eines Formulars (z. B. „Monatliche Beiträge“). */
+.account-form fieldset:not(.settings-fieldset):not(.snapshot-group) {
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  padding: 0.75rem 1rem 0.5rem;
+  margin: 0 0 1rem;
+  background: var(--weiss);
+}
+
+.account-form fieldset:not(.settings-fieldset):not(.snapshot-group) > legend {
+  font-weight: 650;
+  font-size: 0.95rem;
+  padding: 0 0.35rem;
+}
+
+/* Knopf direkt neben einem Eingabefeld (z. B. „Aktuelle Werte übernehmen“). */
+.form-field input + button,
+.form-field select + button {
+  margin-left: 0.5rem;
+  vertical-align: top;
+}
+
+.form-field {
+  margin: 0 0 1rem;
+}
+
+.form-field > label,
+.form-field > span:first-child:not(.app-hint) {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.form-field > .app-hint,
+.form-field .app-hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='date'],
+input[type='month'],
+input[type='email'],
+input[type='search'],
+select,
+textarea {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--tinte);
+  background: var(--eingabe-fill);
+  border: 1px solid var(--eingabe-rand);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.6rem;
+  min-height: 2.35rem;
+  width: 100%;
+  max-width: 26rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Auswahllisten passen sich dem längsten Eintrag an (keine abgeschnittenen Profilnamen). */
+select {
+  cursor: pointer;
+  width: auto;
+  min-width: min(100%, 14rem);
+  max-width: 100%;
+}
+
+input:hover:not(:disabled),
+select:hover:not(:disabled),
+textarea:hover:not(:disabled) {
+  border-color: var(--eingabe-rand-hover);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input[aria-invalid='true'],
+select[aria-invalid='true'] {
+  border-color: var(--rot);
+  border-width: 2px;
+  background: #fbf1ee;
+}
+
+input[type='range'] {
+  accent-color: var(--sparen);
+  width: min(100%, 16rem);
+  cursor: pointer;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--tinte);
+  cursor: pointer;
+  flex: none;
+}
+
+input[type='file'] {
+  font: inherit;
+  font-size: 0.9rem;
+  max-width: 100%;
+}
+
+input[type='file']::file-selector-button {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  color: var(--tinte);
+  background: var(--papier-hell);
+  border: 1px solid var(--tinte);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.9rem;
+  margin-right: 0.75rem;
+  cursor: pointer;
+}
+
+input[type='file']::file-selector-button:hover {
+  background: var(--tinte);
+  color: var(--papier-hell);
+}
+
+.form-field-checkbox > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.form-field-checkbox .app-hint {
+  margin: 0.25rem 0 0 1.55rem;
+}
+
+fieldset {
+  min-width: 0;
+}
+
+.settings-form {
+  max-width: 52rem;
+}
+
+.settings-fieldset,
+.snapshot-group {
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  padding: 0.9rem 1.1rem 0.4rem;
+  margin: 0 0 1.1rem;
+  background: var(--papier-hell);
+}
+
+.settings-fieldset legend,
+.snapshot-group legend {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  padding: 0 0.4rem;
+}
+
+.settings-form .settings-fieldset {
+  background: var(--weiss);
+}
+
+.snapshot-form {
+  max-width: 52rem;
+}
+
+.snapshot-entry-state {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  color: var(--tinte-weich);
+}
+
+/* ================================================================
+   Import / Daten
+   ================================================================ */
+
+.import-field {
+  margin: 0.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.import-field label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.import-preview {
+  background: var(--papier-hell);
+  border: 2px solid var(--tinte);
+  border-radius: var(--radius-gross);
+  padding: 1.25rem 1.4rem;
+  margin: 1.5rem 0;
+  max-width: 60rem;
+  box-shadow: var(--schatten);
+}
+
+.import-preview > h3:first-child {
+  margin-top: 0;
+}
+
+.counts {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.4rem 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.counts li {
+  padding: 0.4rem 0.65rem;
+  background: var(--rechen-fill);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+
+/* ================================================================
+   Ziele (Karten + Fortschritt)
+   ================================================================ */
+
+.goal-list {
+  list-style: none;
+  margin: 0.9rem 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 0.9rem;
+}
+
+.goal-list > li {
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+  padding: 0.95rem 1.1rem;
+  box-shadow: var(--schatten);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.goal-list p {
+  margin: 0.2rem 0;
+}
+
+.goal-heading {
+  margin: 0 0 0.3rem !important;
+  font-size: 1rem;
+}
+
+.goal-heading strong {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.2rem;
+}
+
+.goal-list .row-actions {
+  margin-top: auto;
+  padding-top: 0.6rem;
+}
+
+/* Barrierearme Fortschrittsanzeige: <progress> plus sichtbarer Textwert. */
+.goal-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+progress {
+  appearance: none;
+  -webkit-appearance: none;
+  width: min(16rem, 100%);
+  height: 0.7rem;
+  border: 1px solid var(--linie);
+  border-radius: 999px;
+  background: var(--linie-fein);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+progress::-webkit-progress-bar {
+  background: var(--linie-fein);
+  border-radius: 999px;
+}
+
+progress::-webkit-progress-value {
+  background: var(--sparen);
+  border-radius: 999px;
+}
+
+progress::-moz-progress-bar {
+  background: var(--sparen);
+  border-radius: 999px;
+}
+
+/* ================================================================
+   Filterleiste (Sparpläne)
+   ================================================================ */
 
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
+  gap: 0.65rem 1.5rem;
   align-items: center;
-  margin: 0.75rem 0;
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--papier-hell);
+  border: 1px solid var(--linie-fein);
+  border-radius: var(--radius-gross);
 }
 
 .filter-group {
@@ -667,48 +1653,142 @@ a:focus-visible {
 }
 
 .filter-label {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 650;
+  font-size: 0.82rem;
+  color: var(--tinte-weich);
+  margin-right: 0.2rem;
 }
 
 .filter-button {
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid rgba(128, 128, 128, 0.6);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.25rem 0.7rem;
+  min-height: 1.9rem;
+  border: 1px solid var(--linie);
   border-radius: 999px;
-  background: none;
-  cursor: pointer;
+  background: var(--weiss);
+  color: var(--tinte);
 }
 
-/* Aktiver Filter: Häkchen im Text (Symbol) PLUS Rahmen/Schriftstärke – nie nur Farbe. */
+.filter-button:hover:not(:disabled) {
+  background: var(--linie-fein);
+  color: var(--tinte);
+}
+
+/* Aktiver Filter: Häkchen im Text PLUS Rahmen/Schriftstärke – nie nur Farbe. */
 .filter-button[aria-pressed='true'] {
   font-weight: 700;
-  border-width: 2px;
-  border-color: currentcolor;
-  background: rgba(128, 128, 128, 0.14);
+  border: 2px solid var(--tinte);
+  background: var(--tinte);
+  color: var(--papier-hell);
 }
 
-/* --- Schmale Viewports: Navigation einklappbar über dem Inhalt --- */
+.filter-button[aria-pressed='true']:hover:not(:disabled) {
+  background: #2c4250;
+  color: var(--papier-hell);
+}
 
-@media (max-width: 45rem) {
+/* ================================================================
+   Simulator
+   ================================================================ */
+
+.sim-chart {
+  max-width: 52rem;
+  margin: 0.9rem 0;
+}
+
+/* Nur das Diagramm selbst – nicht die kleinen Linienmuster der Legende. */
+.sim-chart > svg {
+  width: 100%;
+  height: auto;
+  background: var(--papier-hell);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-gross);
+}
+
+.sim-chart-legend svg {
+  flex: none;
+}
+
+/* Sichtbare Legende (Farbe UND Strichmuster). */
+.sim-chart-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.sim-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sim-contribution-row {
+  border: 1px dashed var(--linie);
+  border-radius: var(--radius-gross);
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 0.9rem;
+  background: var(--weiss);
+}
+
+.sim-compare-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Schmale Viewports
+   ================================================================ */
+
+@media (max-width: 84rem) {
+  .header-status div {
+    justify-content: flex-start;
+  }
+
+  .header-status {
+    order: 3;
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 1.5rem;
+    text-align: left;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--linie-fein);
+  }
+}
+
+@media (max-width: 52rem) {
   .app-header {
+    position: static;
     padding: 0.75rem 1rem;
   }
 
   .app-body {
-    flex-direction: column;
+    display: block;
   }
 
   .app-nav {
-    flex: none;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+    padding: 0.5rem 1rem;
     border-right: none;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.45);
-    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--linie);
+    background: var(--papier);
   }
 
   .nav-toggle {
-    display: inline-block;
+    display: inline-flex;
   }
 
   .nav-container {
@@ -717,23 +1797,83 @@ a:focus-visible {
 
   .nav-container.nav-open {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .nav-footnote {
+    display: none;
   }
 
   .app-main {
-    padding: 1rem 1rem 2.5rem;
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .hero {
+    padding: 1.1rem 1rem 1rem;
+  }
+
+  /* Schmal: Aktionsspalte nicht fixieren – sie würde die Tabelle verdecken. */
+  .accounts-table:has(.row-actions) thead th:last-child,
+  .accounts-table td:has(> .row-actions) {
+    position: static;
+    box-shadow: none;
+  }
+
+  .band-legend {
+    flex-direction: column;
+  }
+
+  .band-legend > div {
+    justify-content: space-between;
   }
 }
 
 @media (max-width: 30rem) {
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  /* B8 (M14): Formular-Aktionen auf schmalen Screens stapeln. */
+  .toolbar,
   .form-actions {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .account-form {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media print {
+  .app-nav,
+  .header-actions button,
+  .skip-link {
+    display: none !important;
+  }
+
+  .app-body {
+    display: block;
+  }
+
+  .app-header {
+    position: static;
+  }
+}
+
+/* Globale Meldung eines Datei-Vorgangs (z. B. Speichern aus dem Kopfbereich). */
+div.operation-error p {
+  margin: 0 0 0.5rem;
 }

@@ -5,11 +5,19 @@
  * Der Dateistatus (Dateiname, Speicherstatus, Ungespeichert-Hinweis) steht im
  * Kopfbereich (AppHeader). Keine Finanzlogik in Komponenten –
  * Zählungen kommen aus buildImportSummary.
+ *
+ * Redesign 2026-09: Die Aktionen sind nach Aufgaben in Karten gegliedert
+ * (Öffnen & Anlegen · Speichern · Exportieren & Sichern · Importieren); jede
+ * Karte erklärt in einem Satz, was ihre Knöpfe tun. Die Beschriftungen nennen
+ * das Ergebnis der Aktion („In Datei speichern“, „Bestand durch Import
+ * ersetzen“) statt nur das Verb.
  */
 
 import type { ChangeEvent } from 'react'
 import { useFinanceData } from '../state/useFinanceData'
 import { isSaveFilePickerSupported } from '../storage/featureDetection'
+import { saveButtonLabel } from '../layout/saveLabel'
+import { Icon } from '../components/Icon'
 import { buildImportSummary } from '../storage/importFlow'
 import type { ImportSummary } from '../storage/importFlow'
 import type { ValidationIssue } from '../validation/issues'
@@ -30,15 +38,19 @@ function IssueList({
       <ul>
         {issues.map((issue, index) => (
           <li key={`${issue.code}-${issue.path}-${index}`}>
-            <strong>{issue.code}</strong>
-            {issue.path !== '' ? (
-              <>
-                {' – '}
-                <code>{issue.path}</code>
-              </>
-            ) : null}
-            {': '}
-            {issue.message}
+            {/* Klartext zuerst; Code und Datenpfad nur als kleines technisches
+                Detail für Fehlersuche/Support (Redesign 2026-09). */}
+            {issue.message}{' '}
+            <span className="issue-tech">
+              (Code <code>{issue.code}</code>
+              {issue.path !== '' ? (
+                <>
+                  {' · Stelle '}
+                  <code>{issue.path}</code>
+                </>
+              ) : null}
+              )
+            </span>
           </li>
         ))}
       </ul>
@@ -107,7 +119,8 @@ function ImportPreview() {
               onClick={() => actions.backupDownload()}
               disabled={state.isSaving}
             >
-              Vor dem Import: Sicherungskopie des aktuellen Bestands herunterladen
+              <Icon name="download" />
+              Aktuellen Bestand vorher sichern (Download)
             </button>
           </p>
         </section>
@@ -117,7 +130,7 @@ function ImportPreview() {
           <IssueList issues={result.warnings} title="Hinweise zur Importdatei" tone="warning" />
           <p>
             Der Import ersetzt den aktuell geladenen Bestand vollständig und löst die Verbindung zur
-            bisher geöffneten Datei. Speichere danach über „Speichern" neu.
+            bisher geöffneten Datei. Speichere danach über „{saveButtonLabel(false)}“ neu.
           </p>
           {state.isDirty ? (
             <p className="operation-error" role="alert">
@@ -126,11 +139,16 @@ function ImportPreview() {
             </p>
           ) : null}
           <div className="toolbar">
-            <button type="button" onClick={() => actions.confirmImport()} disabled={state.isSaving}>
-              Import bestätigen
+            <button
+              type="button"
+              className="btn-danger btn-primary"
+              onClick={() => actions.confirmImport()}
+              disabled={state.isSaving}
+            >
+              Bestand durch Import ersetzen
             </button>
             <button type="button" onClick={() => actions.cancelImport()} disabled={state.isSaving}>
-              Abbrechen
+              Import abbrechen
             </button>
           </div>
         </>
@@ -144,7 +162,7 @@ function ImportPreview() {
           <p>Der aktuell geladene Bestand bleibt unverändert.</p>
           <div className="toolbar">
             <button type="button" onClick={() => actions.cancelImport()}>
-              Schließen
+              Vorschau schließen
             </button>
           </div>
         </>
@@ -175,66 +193,112 @@ export function DataBackupsPage() {
       </p>
 
       <section aria-labelledby="actions-heading">
-        <h3 id="actions-heading">Aktionen</h3>
-        <div className="toolbar">
-          <button type="button" onClick={() => void actions.openFile()} disabled={isSaving}>
-            Datei öffnen
-          </button>
-          <button
-            type="button"
-            onClick={() => void actions.saveDirect()}
-            disabled={!data || isSaving}
-          >
-            {isSaving
-              ? 'Speichern läuft …'
-              : canDirectSave
-                ? 'Speichern'
-                : 'Speichern (als Download)'}
-          </button>
-          {canDirectSave ? (
-            <button
-              type="button"
-              onClick={() => void actions.saveAs()}
-              disabled={!data || isSaving}
-            >
-              Speichern unter …
-            </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => actions.exportDownload({ markAsSaved: false })}
-            disabled={!data || isSaving}
-          >
-            Exportieren (Download)
-          </button>
-          <button
-            type="button"
-            onClick={() => actions.exportDownload({ markAsSaved: true })}
-            disabled={!data || isSaving}
-          >
-            Exportieren und als gespeichert markieren
-          </button>
-          <button
-            type="button"
-            onClick={() => actions.backupDownload()}
-            disabled={!data || isSaving}
-          >
-            Sicherungskopie herunterladen
-          </button>
-          <button type="button" onClick={() => actions.newFile()} disabled={isSaving}>
-            Neue leere Datei
-          </button>
+        <h3 id="actions-heading" className="visually-hidden">
+          Aktionen
+        </h3>
+        <div className="card-grid">
+          <section className="card" aria-labelledby="card-open-heading">
+            <h3 id="card-open-heading">Öffnen &amp; neu anlegen</h3>
+            <p className="card-lead">
+              Lädt eine vorhandene Finanzdatei oder startet mit einem leeren Bestand. Gibt es noch
+              nicht gespeicherte Änderungen, fragt die App vorher nach.
+            </p>
+            <div className="toolbar">
+              <button
+                type="button"
+                className={data ? undefined : 'btn-primary'}
+                onClick={() => void actions.openFile()}
+                disabled={isSaving}
+              >
+                <Icon name="open" />
+                Datei öffnen …
+              </button>
+              <button type="button" onClick={() => actions.newFile()} disabled={isSaving}>
+                <Icon name="file" />
+                Neue leere Datei anlegen
+              </button>
+            </div>
+          </section>
+
+          <section className="card" aria-labelledby="card-save-heading">
+            <h3 id="card-save-heading">Speichern</h3>
+            <p className="card-lead">
+              {canDirectSave
+                ? 'Schreibt alle Änderungen in die geöffnete Datei. „Speichern unter …“ legt eine neue Datei an.'
+                : 'Dieser Browser kann Dateien nicht direkt überschreiben – gespeichert wird als Download, den du anschließend ablegst.'}
+            </p>
+            <div className="toolbar">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => void actions.saveDirect()}
+                disabled={!data || isSaving}
+              >
+                <Icon name="save" />
+                {saveButtonLabel(isSaving)}
+              </button>
+              {canDirectSave ? (
+                <button
+                  type="button"
+                  onClick={() => void actions.saveAs()}
+                  disabled={!data || isSaving}
+                >
+                  Speichern unter …
+                </button>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="card" aria-labelledby="card-export-heading">
+            <h3 id="card-export-heading">Exportieren &amp; sichern</h3>
+            <p className="card-lead">
+              Lädt den aktuellen Stand als JSON herunter. Nur „als gespeichert markieren“ setzt den
+              Hinweis auf ungespeicherte Änderungen zurück.
+            </p>
+            <div className="toolbar">
+              <button
+                type="button"
+                onClick={() => actions.exportDownload({ markAsSaved: false })}
+                disabled={!data || isSaving}
+              >
+                <Icon name="download" />
+                Kopie exportieren (Download)
+              </button>
+              <button
+                type="button"
+                onClick={() => actions.exportDownload({ markAsSaved: true })}
+                disabled={!data || isSaving}
+              >
+                Exportieren und als gespeichert markieren
+              </button>
+              <button
+                type="button"
+                onClick={() => actions.backupDownload()}
+                disabled={!data || isSaving}
+              >
+                Sicherungskopie herunterladen
+              </button>
+            </div>
+          </section>
+
+          <section className="card" aria-labelledby="card-import-heading">
+            <h3 id="card-import-heading">Importieren</h3>
+            <p className="card-lead">
+              Liest eine JSON-Datei ein und zeigt zuerst eine Vorschau. Erst nach deiner Bestätigung
+              wird der aktuelle Bestand ersetzt.
+            </p>
+            <p className="import-field">
+              <label htmlFor="import-file-input">JSON-Datei für den Import auswählen</label>
+              <input
+                id="import-file-input"
+                type="file"
+                accept="application/json,.json"
+                onChange={onImportFileChange}
+                disabled={isSaving}
+              />
+            </p>
+          </section>
         </div>
-        <p className="import-field">
-          <label htmlFor="import-file-input">Datei importieren (JSON):</label>{' '}
-          <input
-            id="import-file-input"
-            type="file"
-            accept="application/json,.json"
-            onChange={onImportFileChange}
-            disabled={isSaving}
-          />
-        </p>
         {operationError !== null ? (
           <p className="operation-error" role="alert">
             ⚠ {operationError}
@@ -263,10 +327,10 @@ export function DataBackupsPage() {
 
       {!data && !pendingImport ? (
         <p className="app-hint">
-          Es sind noch keine Finanzdaten geladen. Öffne eine vorhandene JSON-Datei („Datei öffnen"),
-          importiere eine Datei oder lege mit „Neue leere Datei" einen frischen Bestand an. Die
-          JSON-Datei bleibt die einzige dauerhafte Datenquelle – es werden keine Daten an einen
-          Server gesendet.
+          Es sind noch keine Finanzdaten geladen. Öffne eine vorhandene JSON-Datei („Datei öffnen
+          …“), importiere eine Datei oder lege mit „Neue leere Datei anlegen“ einen frischen Bestand
+          an. Die JSON-Datei bleibt die einzige dauerhafte Datenquelle – es werden keine Daten an
+          einen Server gesendet.
         </p>
       ) : null}
     </section>
